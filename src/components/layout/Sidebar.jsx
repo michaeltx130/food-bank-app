@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
   Drawer,
@@ -24,15 +25,16 @@ import {
 
 const Sidebar = () => {
   // 🔹 Opciones del menú
-  const menuItems = [
-    { text: "Dashboard", icon: <DashboardIcon /> },
-    { text: "Inventario", icon: <InventoryIcon /> },
-    { text: "Red de Inventarios", icon: <NetworkIcon /> },
-    { text: "Solicitudes", icon: <RequestIcon /> },
-    { text: "Donaciones", icon: <DonationIcon /> },
-    { text: "Beneficiarios", icon: <BeneficiaryIcon /> },
-    { text: "Historial", icon: <HistoryIcon /> },
-  ];
+  const navigate = useNavigate();
+ const menuItems = [
+  { text: "Dashboard", icon: <DashboardIcon />, path: "/" },
+  { text: "Inventario", icon: <InventoryIcon />, path: "/" },
+  { text: "Red de Inventarios", icon: <NetworkIcon />, path: "/" },
+  { text: "Solicitudes", icon: <RequestIcon />, path: "/requests" },
+  { text: "Donaciones", icon: <DonationIcon />, path: "/" },
+  { text: "Beneficiarios", icon: <BeneficiaryIcon />, path: "/" },
+  { text: "Historial", icon: <HistoryIcon />, path: "/" },
+];
 
   return (
     <Drawer
@@ -94,7 +96,7 @@ const Sidebar = () => {
             {menuItems.map((item) => (
               <ListItemButton
                 key={item.text}
-                selected={item.text === "Dashboard"}
+                onClick={() => navigate(item.path)}
                 sx={{
                   borderRadius: 3,
                   marginBottom: 1,
