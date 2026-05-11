@@ -11,20 +11,43 @@ const Request = () => {
   const [open, setOpen] = useState(false);
 
   return (
-    <div style={{ display: "flex", backgroundColor: "#f3f4f6", minHeight: "100vh" }}>
+    <div
+      style={{
+        display: "flex",
+        backgroundColor: "#F9FAFB",
+        minHeight: "100vh",
+      }}
+    >
       <Sidebar />
 
-      <div style={{ padding: "40px", flex: 1 }}>
+      <div
+        style={{
+          padding: "40px",
+          flex: 1,
+          padding: "40px",
+          flex: 1,
+          height: "100vh",
+          overflowY: "auto",
+          boxSizing: "border-box",
+        }}
+      >
         <h1 style={{ fontSize: "48px", marginBottom: "30px" }}>Solicitudes</h1>
 
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-          
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 4,
+          }}
+        >
           <Box sx={{ display: "flex", gap: 2 }}>
             <Button
               onClick={() => setSelected("received")}
               startIcon={<InboxOutlinedIcon />}
               sx={{
-                backgroundColor: selected === "received" ? "#ffffff" : "transparent",
+                backgroundColor:
+                  selected === "received" ? "#ffffff" : "transparent",
                 color: selected === "received" ? "#111827" : "#6b7280",
                 borderRadius: 4,
                 paddingX: 3,
@@ -32,7 +55,10 @@ const Request = () => {
                 textTransform: "none",
                 fontWeight: 700,
                 fontSize: "18px",
-                boxShadow: selected === "received" ? "0px 2px 8px rgba(0,0,0,0.08)" : "none",
+                boxShadow:
+                  selected === "received"
+                    ? "0px 2px 8px rgba(0,0,0,0.08)"
+                    : "none",
                 "&:hover": { backgroundColor: "#ffffff" },
               }}
             >
@@ -46,7 +72,8 @@ const Request = () => {
               onClick={() => setSelected("sent")}
               startIcon={<DetailsIcon />}
               sx={{
-                backgroundColor: selected === "sent" ? "#ffffff" : "transparent",
+                backgroundColor:
+                  selected === "sent" ? "#ffffff" : "transparent",
                 color: selected === "sent" ? "#111827" : "#6b7280",
                 borderRadius: 4,
                 paddingX: 3,
@@ -54,7 +81,8 @@ const Request = () => {
                 textTransform: "none",
                 fontWeight: 700,
                 fontSize: "18px",
-                boxShadow: selected === "sent" ? "0px 2px 8px rgba(0,0,0,0.08)" : "none",
+                boxShadow:
+                  selected === "sent" ? "0px 2px 8px rgba(0,0,0,0.08)" : "none",
                 "&:hover": { backgroundColor: "#ffffff" },
               }}
             >
