@@ -11,23 +11,50 @@ import {
 
 import InventoryRow from "./InventoryRow";
 
-const InventoryTable = ({ products }) => {
+const InventoryTable = ({ products, showRequestButton = false }) => {
   return (
     <TableContainer>
-      <Table>
+      <Table
+        sx={{
+          tableLayout: "fixed",
+        }}
+      >
         {/* Header */}
         <TableHead>
           <TableRow>
-            <TableCell sx={{ fontWeight: "bold", color: "#737373" }}>
+            <TableCell
+              sx={{
+                fontWeight: "bold",
+                color: "#737373",
+              }}
+            >
               Producto
             </TableCell>
-            <TableCell sx={{ fontWeight: "bold", color: "#737373" }}>
+
+            <TableCell
+              sx={{
+                fontWeight: "bold",
+                color: "#737373",
+              }}
+            >
               Código
             </TableCell>
-            <TableCell sx={{ fontWeight: "bold", color: "#737373" }}>
+
+            <TableCell
+              sx={{
+                fontWeight: "bold",
+                color: "#737373",
+              }}
+            >
               Categoría
             </TableCell>
-            <TableCell sx={{ fontWeight: "bold", color: "#737373" }}>
+
+            <TableCell
+              sx={{
+                fontWeight: "bold",
+                color: "#737373",
+              }}
+            >
               Cantidad
             </TableCell>
           </TableRow>
@@ -38,7 +65,7 @@ const InventoryTable = ({ products }) => {
           {products.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={4}
+                colSpan={showRequestButton ? 5 : 4}
                 align="center"
                 sx={{
                   paddingY: 6,
@@ -52,7 +79,11 @@ const InventoryTable = ({ products }) => {
             </TableRow>
           ) : (
             products.map((product) => (
-              <InventoryRow key={product.id} product={product} />
+              <InventoryRow
+                key={product.id}
+                product={product}
+                showRequestButton={showRequestButton}
+              />
             ))
           )}
         </TableBody>

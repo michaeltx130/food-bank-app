@@ -1,10 +1,10 @@
 import React from "react";
 
-import { TableRow, TableCell, Box, Typography } from "@mui/material";
-
+import { TableRow, TableCell, Box, Typography, Button } from "@mui/material";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
+import SendIcon from '@mui/icons-material/Send';
 
-const InventoryRow = ({ product }) => {
+const InventoryRow = ({ product, showRequestButton = false }) => {
   return (
     <TableRow
       hover
@@ -44,7 +44,7 @@ const InventoryRow = ({ product }) => {
           {/* Nombre */}
           <Typography
             sx={{
-              fontWeight: 600,
+              fontWeight: "bold",
               color: "#171717",
             }}
           >
@@ -70,7 +70,7 @@ const InventoryRow = ({ product }) => {
         >
           <Typography
             sx={{
-              fontWeight: 700,
+              fontWeight: "bold",
               color: "#171717",
             }}
           >
@@ -86,6 +86,28 @@ const InventoryRow = ({ product }) => {
           </Typography>
         </Box>
       </TableCell>
+
+      {/* Request Button */}
+      {showRequestButton && (
+        <TableCell>
+          <Button
+            variant="contained"
+            startIcon={<SendIcon />}
+            sx={{
+              backgroundColor: "#F97316",
+              borderRadius: "12px",
+              textTransform: "none",
+              fontWeight: "bold",
+
+              "&:hover": {
+                backgroundColor: "#EA580C",
+              },
+            }}
+          >
+            Solicitar
+          </Button>
+        </TableCell>
+      )}
     </TableRow>
   );
 };

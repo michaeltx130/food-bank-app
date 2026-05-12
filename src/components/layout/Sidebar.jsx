@@ -26,15 +26,15 @@ import {
 const Sidebar = () => {
   // 🔹 Opciones del menú
   const navigate = useNavigate();
- const menuItems = [
-  { text: "Dashboard", icon: <DashboardIcon />, path: "/" },
-  { text: "Inventario", icon: <InventoryIcon />, path: "/inventory" },
-  { text: "Red de Inventarios", icon: <NetworkIcon />, path: "/" },
-  { text: "Solicitudes", icon: <RequestIcon />, path: "/requests" },
-  { text: "Donaciones", icon: <DonationIcon />, path: "/" },
-  { text: "Beneficiarios", icon: <BeneficiaryIcon />, path: "/" },
-  { text: "Historial", icon: <HistoryIcon />, path: "/" },
-];
+  const menuItems = [
+    { text: "Dashboard", icon: <DashboardIcon />, path: "/" },
+    { text: "Inventario", icon: <InventoryIcon />, path: "/inventory" },
+    { text: "Red de Inventarios", icon: <NetworkIcon />, path: "/network" },
+    { text: "Solicitudes", icon: <RequestIcon />, path: "/requests" },
+    { text: "Donaciones", icon: <DonationIcon />, path: "/" },
+    { text: "Beneficiarios", icon: <BeneficiaryIcon />, path: "/" },
+    { text: "Historial", icon: <HistoryIcon />, path: "/" },
+  ];
 
   return (
     <Drawer

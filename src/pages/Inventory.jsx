@@ -8,7 +8,9 @@ import InventoryTable from "../components/inventory/InventoryTable";
 import AddProductModal from "../components/inventory/AddProductModal";
 
 const Inventory = () => {
-  const products = [];
+  const products = [
+
+  ];
 
   const [openModal, setOpenModal] = useState(false);
   const handleOpen = () => {
