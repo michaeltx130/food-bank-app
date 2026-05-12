@@ -12,7 +12,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import InventoryTable from "../inventory/InventoryTable";
 
-const BranchCard = ({ branch }) => {
+const BranchCard = ({ branch, onRequest }) => {
   return (
     <Accordion
       sx={{
@@ -99,7 +99,12 @@ const BranchCard = ({ branch }) => {
       </AccordionSummary>
       {/* Table */}
       <AccordionDetails>
-        <InventoryTable products={branch.products} showRequestButton />
+        <InventoryTable
+          products={branch.products}
+          showRequestButton
+          onRequest={onRequest}
+          branchName={branch.branchName}
+        />
       </AccordionDetails>
     </Accordion>
   );

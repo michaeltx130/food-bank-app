@@ -11,7 +11,12 @@ import {
 
 import InventoryRow from "./InventoryRow";
 
-const InventoryTable = ({ products, showRequestButton = false }) => {
+const InventoryTable = ({
+  products,
+  showRequestButton = false,
+  onRequest,
+  branchName,
+}) => {
   return (
     <TableContainer>
       <Table
@@ -83,6 +88,8 @@ const InventoryTable = ({ products, showRequestButton = false }) => {
                 key={product.id}
                 product={product}
                 showRequestButton={showRequestButton}
+                onRequest={onRequest}
+                branchName={branchName}
               />
             ))
           )}

@@ -2,9 +2,14 @@ import React from "react";
 
 import { TableRow, TableCell, Box, Typography, Button } from "@mui/material";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
-import SendIcon from '@mui/icons-material/Send';
+import SendIcon from "@mui/icons-material/Send";
 
-const InventoryRow = ({ product, showRequestButton = false }) => {
+const InventoryRow = ({
+  product,
+  showRequestButton = false,
+  onRequest,
+  branchName,
+}) => {
   return (
     <TableRow
       hover
@@ -93,6 +98,7 @@ const InventoryRow = ({ product, showRequestButton = false }) => {
           <Button
             variant="contained"
             startIcon={<SendIcon />}
+            onClick={() => onRequest(product, branchName)}
             sx={{
               backgroundColor: "#F97316",
               borderRadius: "12px",

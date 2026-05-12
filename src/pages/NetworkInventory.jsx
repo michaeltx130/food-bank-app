@@ -1,12 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 
 import { Box, Typography } from "@mui/material";
 import Sidebar from "../components/layout/Sidebar";
 import SearchBar from "../components/inventory/SearchBar";
 import BranchCard from "../components/network/BranchCard";
+import RequestProductModal from "../components/network/RequestProductModal";
 
 const NetworkInventory = () => {
-
   const branches = [
     {
       id: 1,
@@ -29,6 +29,20 @@ const NetworkInventory = () => {
       products: [],
     },
   ];
+
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedBranch, setSelectedBranch] = useState("");
+
+  const handleOpenModal = (product, branchName) => {
+    setSelectedProduct(product);
+    setSelectedBranch(branchName);
+    setOpenModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+  };
 
   return (
     <Box
@@ -77,8 +91,18 @@ const NetworkInventory = () => {
 
         {/* Branches */}
         {branches.map((branch) => (
-          <BranchCard key={branch.id} branch={branch} />
+          <BranchCard
+            key={branch.id}
+            branch={branch}
+            onRequest={handleOpenModal}
+          />
         ))}
+        <RequestProductModal
+          open={openModal}
+          handleClose={handleCloseModal}
+          product={selectedProduct}
+          branchName={selectedBranch}
+        />
       </Box>
     </Box>
   );
