@@ -1,13 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
 
 import { Box, Typography, Button, Paper } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import Sidebar from "../components/layout/Sidebar";
 import SearchBar from "../components/inventory/SearchBar";
 import InventoryTable from "../components/inventory/InventoryTable";
+import AddProductModal from "../components/inventory/AddProductModal";
 
 const Inventory = () => {
   const products = [];
+
+  const [openModal, setOpenModal] = useState(false);
+  const handleOpen = () => {
+    setOpenModal(true);
+  };
+  const handleClose = () => {
+    setOpenModal(false);
+  };
 
   return (
     <Box
@@ -50,6 +59,7 @@ const Inventory = () => {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
+            onClick={handleOpen}
             sx={{
               backgroundColor: "#F97316",
               borderRadius: "14px",
@@ -75,6 +85,9 @@ const Inventory = () => {
           <SearchBar />
           <InventoryTable products={products} />
         </Paper>
+
+        {/* Modal */}
+        <AddProductModal open={openModal} handleClose={handleClose} />
       </Box>
     </Box>
   );
