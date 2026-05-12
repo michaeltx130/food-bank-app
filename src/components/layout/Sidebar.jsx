@@ -28,7 +28,7 @@ const Sidebar = () => {
   const navigate = useNavigate();
  const menuItems = [
   { text: "Dashboard", icon: <DashboardIcon />, path: "/" },
-  { text: "Inventario", icon: <InventoryIcon />, path: "/" },
+  { text: "Inventario", icon: <InventoryIcon />, path: "/inventory" },
   { text: "Red de Inventarios", icon: <NetworkIcon />, path: "/" },
   { text: "Solicitudes", icon: <RequestIcon />, path: "/requests" },
   { text: "Donaciones", icon: <DonationIcon />, path: "/" },
