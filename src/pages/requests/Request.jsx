@@ -24,8 +24,6 @@ const Request = () => {
         style={{
           padding: "40px",
           flex: 1,
-          padding: "40px",
-          flex: 1,
           height: "100vh",
           overflowY: "auto",
           boxSizing: "border-box",
@@ -90,7 +88,6 @@ const Request = () => {
             </Button>
           </Box>
 
-          {/* Botón Nueva Solicitud — solo en tab Enviadas */}
           {selected === "sent" && (
             <Button
               variant="contained"

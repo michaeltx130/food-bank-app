@@ -12,7 +12,6 @@ const Received = () => {
       }}
     >
       <RequestCard />
-      <RequestCard />
     </Box>
   );
 };

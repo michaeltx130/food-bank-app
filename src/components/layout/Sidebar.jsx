@@ -31,8 +31,8 @@ const Sidebar = () => {
     { text: "Inventario", icon: <InventoryIcon />, path: "/inventory" },
     { text: "Red de Inventarios", icon: <NetworkIcon />, path: "/network" },
     { text: "Solicitudes", icon: <RequestIcon />, path: "/requests" },
-    { text: "Donaciones", icon: <DonationIcon />, path: "/" },
-    { text: "Beneficiarios", icon: <BeneficiaryIcon />, path: "/" },
+    { text: "Donaciones", icon: <DonationIcon />, path: "/donations" },
+    { text: "Beneficiarios", icon: <BeneficiaryIcon />, path: "/beneficiaries" },
     { text: "Historial", icon: <HistoryIcon />, path: "/" },
   ];
 
