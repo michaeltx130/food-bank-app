@@ -1,78 +1,64 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 
-import { Box, Typography, Button, Paper, Pagination } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  Paper,
+  Pagination,
+  CircularProgress,
+} from "@mui/material";
 
 import AddIcon from "@mui/icons-material/Add";
 import Sidebar from "../components/layout/Sidebar";
 import SearchBar from "../components/inventory/SearchBar";
 import InventoryTable from "../components/inventory/InventoryTable";
 import AddProductModal from "../components/inventory/AddProductModal";
+import { getProducts } from "../services/api";
 
 const Inventory = () => {
+  //const CURRENT_NODE = "lapaz"; // Cambia esto según el nodo que quieras consultar
+
   const [searchTerm, setSearchTerm] = useState("");
   //Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 5;
   const [openModal, setOpenModal] = useState(false);
+
   //Los productos vendrán del backend
-  const products = [
-    {
-      id: 1,
-      name: "Arroz",
-      quantity: 100,
-      unit: "kg",
-      category: "Granos",
-    },
-    {
-      id: 2,
-      name: "Frijoles",
-      quantity: 50,
-      unit: "kg",
-      category: "Granos",
-    },
-    {
-      id: 3,
-      name: "Frijoles",
-      quantity: 50,
-      unit: "kg",
-      category: "Granos",
-    },
-    {
-      id: 4,
-      name: "Frijoles",
-      quantity: 50,
-      unit: "kg",
-      category: "Granos",
-    },
-    {
-      id: 5,
-      name: "Frijoles",
-      quantity: 50,
-      unit: "kg",
-      category: "Granos",
-    },
-    {
-      id: 6,
-      name: "Frijoles",
-      quantity: 50,
-      unit: "kg",
-      category: "Granos",
-    },
-    {
-      id: 7,
-      name: "Frijoles",
-      quantity: 50,
-      unit: "kg",
-      category: "Granos",
-    },
-    {
-      id: 8,
-      name: "Manzana",
-      quantity: 50,
-      unit: "kg",
-      category: "Frutas y Verduras",
-    },
-  ];
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const data = await getProducts();
+
+        const formattedProducts = data.map((product) => ({
+          id: product.id,
+          name: product.nombre,
+          category: product.categoria?.nombre || "Sin categoría",
+          quantity: product.cantidad,
+          //luego esto vendrá del backend
+          unit: product.unidad,
+        }));
+
+        setProducts(formattedProducts);
+      } catch (err) {
+        console.error(err);
+
+        setError("Error cargando productos");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   //Productos filtrados
   const filteredProducts = useMemo(() => {
@@ -87,11 +73,8 @@ const Inventory = () => {
 
   //Lógica de paginación
   const startIndex = (currentPage - 1) * productsPerPage;
-
   const endIndex = startIndex + productsPerPage;
-
   const currentProducts = filteredProducts.slice(startIndex, endIndex);
-
   //Páginas totales
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
   const handleOpen = () => {
@@ -100,6 +83,36 @@ const Inventory = () => {
   const handleClose = () => {
     setOpenModal(false);
   };
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box
