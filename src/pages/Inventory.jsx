@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 
-import { Box, Typography, Button, Paper } from "@mui/material";
+import { Box, Typography, Button, Paper, Pagination } from "@mui/material";
+
 import AddIcon from "@mui/icons-material/Add";
 import Sidebar from "../components/layout/Sidebar";
 import SearchBar from "../components/inventory/SearchBar";
@@ -8,11 +9,91 @@ import InventoryTable from "../components/inventory/InventoryTable";
 import AddProductModal from "../components/inventory/AddProductModal";
 
 const Inventory = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  //Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 5;
+  const [openModal, setOpenModal] = useState(false);
+  //Los productos vendrán del backend
   const products = [
-
+    {
+      id: 1,
+      name: "Arroz",
+      quantity: 100,
+      unit: "kg",
+      category: "Granos",
+    },
+    {
+      id: 2,
+      name: "Frijoles",
+      quantity: 50,
+      unit: "kg",
+      category: "Granos",
+    },
+    {
+      id: 3,
+      name: "Frijoles",
+      quantity: 50,
+      unit: "kg",
+      category: "Granos",
+    },
+    {
+      id: 4,
+      name: "Frijoles",
+      quantity: 50,
+      unit: "kg",
+      category: "Granos",
+    },
+    {
+      id: 5,
+      name: "Frijoles",
+      quantity: 50,
+      unit: "kg",
+      category: "Granos",
+    },
+    {
+      id: 6,
+      name: "Frijoles",
+      quantity: 50,
+      unit: "kg",
+      category: "Granos",
+    },
+    {
+      id: 7,
+      name: "Frijoles",
+      quantity: 50,
+      unit: "kg",
+      category: "Granos",
+    },
+    {
+      id: 8,
+      name: "Manzana",
+      quantity: 50,
+      unit: "kg",
+      category: "Frutas y Verduras",
+    },
   ];
 
-  const [openModal, setOpenModal] = useState(false);
+  //Productos filtrados
+  const filteredProducts = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return products;
+    }
+
+    return products.filter((product) =>
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+  }, [searchTerm, products]);
+
+  //Lógica de paginación
+  const startIndex = (currentPage - 1) * productsPerPage;
+
+  const endIndex = startIndex + productsPerPage;
+
+  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+
+  //Páginas totales
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
   const handleOpen = () => {
     setOpenModal(true);
   };
@@ -27,10 +108,7 @@ const Inventory = () => {
         height: "100vh",
       }}
     >
-      {/* Sidebar */}
       <Sidebar />
-
-      {/* Main Content */}
       <Box
         sx={{
           flexGrow: 1,
@@ -39,7 +117,6 @@ const Inventory = () => {
           overflowY: "auto",
         }}
       >
-        {/* Header */}
         <Box
           sx={{
             display: "flex",
@@ -51,13 +128,12 @@ const Inventory = () => {
           <Typography
             variant="h4"
             sx={{
-              fontWeight: "bold",
+              fontWeight: 700,
               color: "#171717",
             }}
           >
             Inventario
           </Typography>
-
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -69,13 +145,14 @@ const Inventory = () => {
               fontWeight: 600,
               paddingX: 3,
               paddingY: 1.2,
+              "&:hover": {
+                backgroundColor: "#EA580C",
+              },
             }}
           >
             Agregar Producto
           </Button>
         </Box>
-
-        {/* Table Container */}
         <Paper
           sx={{
             padding: 3,
@@ -84,10 +161,30 @@ const Inventory = () => {
             boxShadow: "0px 1px 2px rgba(0,0,0,0.04)",
           }}
         >
-          <SearchBar />
-          <InventoryTable products={products} />
-        </Paper>
+          <SearchBar
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <InventoryTable products={currentProducts} />
 
+          {/* Paginación */}
+          {totalPages > 1 && (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                marginTop: 3,
+              }}
+            >
+              <Pagination
+                count={totalPages}
+                page={currentPage}
+                onChange={(event, value) => setCurrentPage(value)}
+                color="primary"
+              />
+            </Box>
+          )}
+        </Paper>
         {/* Modal */}
         <AddProductModal open={openModal} handleClose={handleClose} />
       </Box>

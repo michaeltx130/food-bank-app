@@ -3,7 +3,11 @@ import React from "react";
 import { TextField, Box } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
-const SearchBar = ({ placeholder = "Buscar productos" }) => {
+const SearchBar = ({
+  placeholder = "Buscar productos",
+  value,
+  onChange,
+}) => {
   return (
     <Box
       sx={{
@@ -13,7 +17,6 @@ const SearchBar = ({ placeholder = "Buscar productos" }) => {
         width: "100%",
       }}
     >
-      {/* Icon */}
       <SearchIcon
         sx={{
           position: "absolute",
@@ -30,6 +33,8 @@ const SearchBar = ({ placeholder = "Buscar productos" }) => {
         fullWidth
         variant="outlined"
         placeholder={placeholder}
+        value={value}
+        onChange={onChange}
         sx={{
           "& .MuiOutlinedInput-root": {
             borderRadius: "16px",

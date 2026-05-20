@@ -12,7 +12,7 @@ import {
 import InventoryRow from "./InventoryRow";
 
 const InventoryTable = ({
-  products,
+  products = [],
   showRequestButton = false,
   onRequest,
   branchName,
@@ -24,12 +24,11 @@ const InventoryTable = ({
           tableLayout: "fixed",
         }}
       >
-        {/* Header */}
         <TableHead>
           <TableRow>
             <TableCell
               sx={{
-                fontWeight: "bold",
+                fontWeight: 700,
                 color: "#737373",
               }}
             >
@@ -38,7 +37,7 @@ const InventoryTable = ({
 
             <TableCell
               sx={{
-                fontWeight: "bold",
+                fontWeight: 700,
                 color: "#737373",
               }}
             >
@@ -47,7 +46,7 @@ const InventoryTable = ({
 
             <TableCell
               sx={{
-                fontWeight: "bold",
+                fontWeight: 700,
                 color: "#737373",
               }}
             >
@@ -56,7 +55,7 @@ const InventoryTable = ({
 
             <TableCell
               sx={{
-                fontWeight: "bold",
+                fontWeight: 700,
                 color: "#737373",
               }}
             >
@@ -65,7 +64,6 @@ const InventoryTable = ({
           </TableRow>
         </TableHead>
 
-        {/* Body */}
         <TableBody>
           {products.length === 0 ? (
             <TableRow>
@@ -99,4 +97,4 @@ const InventoryTable = ({
   );
 };
 
-export default InventoryTable;
+export default React.memo(InventoryTable);

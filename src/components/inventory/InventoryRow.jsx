@@ -10,6 +10,11 @@ const InventoryRow = ({
   onRequest,
   branchName,
 }) => {
+  const handleRequest = () => {
+    if (!onRequest) return;
+    onRequest(product, branchName);
+  };
+
   return (
     <TableRow
       hover
@@ -19,7 +24,6 @@ const InventoryRow = ({
         },
       }}
     >
-      {/* Producto */}
       <TableCell>
         <Box
           sx={{
@@ -28,28 +32,23 @@ const InventoryRow = ({
             gap: 2,
           }}
         >
-          {/* Icono */}
           <Box
             sx={{
               width: 38,
               height: 38,
               borderRadius: "12px",
               backgroundColor: "#FFF7ED",
-
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-
               color: "#F97316",
             }}
           >
             <Inventory2Icon />
           </Box>
-
-          {/* Nombre */}
           <Typography
             sx={{
-              fontWeight: "bold",
+              fontWeight: 700,
               color: "#171717",
             }}
           >
@@ -58,13 +57,10 @@ const InventoryRow = ({
         </Box>
       </TableCell>
 
-      {/* Código */}
       <TableCell>{product.id}</TableCell>
 
-      {/* Categoría */}
       <TableCell>{product.category}</TableCell>
 
-      {/* Cantidad */}
       <TableCell>
         <Box
           sx={{
@@ -75,13 +71,12 @@ const InventoryRow = ({
         >
           <Typography
             sx={{
-              fontWeight: "bold",
+              fontWeight: 700,
               color: "#171717",
             }}
           >
             {product.quantity}
           </Typography>
-
           <Typography
             sx={{
               color: "#737373",
@@ -91,23 +86,19 @@ const InventoryRow = ({
           </Typography>
         </Box>
       </TableCell>
-
-      {/* Request Button */}
       {showRequestButton && (
         <TableCell>
           <Button
             variant="contained"
             startIcon={<SendIcon />}
-            onClick={() => onRequest(product, branchName)}
+            onClick={handleRequest}
             sx={{
               backgroundColor: "#F97316",
               borderRadius: "12px",
               textTransform: "none",
-              fontWeight: "bold",
-
-              "&:hover": {
-                backgroundColor: "#EA580C",
-              },
+              fontWeight: 700,
+              boxShadow: "none",
+              "&:hover": { backgroundColor: "#EA580C", boxShadow: "none" },
             }}
           >
             Solicitar
@@ -118,4 +109,4 @@ const InventoryRow = ({
   );
 };
 
-export default InventoryRow;
+export default React.memo(InventoryRow);
