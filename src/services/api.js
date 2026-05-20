@@ -17,3 +17,22 @@ export const getProducts = async () => {
     return [];
   }
 };
+
+//Obtener productos de otro nodo
+export const getBranchProducts = async (branch) => {
+  try {
+    const ports = {
+      comondu: 3001,
+      lapaz: 3002,
+      loreto: 3003,
+      mulege: 3004,
+    };
+    const response = await axios.get(
+      `http://localhost:${ports[branch]}/api/${branch}/productos`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error(`Error obteniendo productos de ${branch}:`, error);
+    return [];
+  }
+};

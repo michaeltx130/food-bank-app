@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import {
   Drawer,
@@ -26,13 +26,29 @@ import {
 const Sidebar = () => {
   // 🔹 Opciones del menú
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const CURRENT_NODE = import.meta.env.VITE_CURRENT_NODE;
+  const branchNames = {
+    lapaz: "La Paz",
+    comondu: "Comondú",
+    loreto: "Loreto",
+    mulege: "Mulegé",
+  };
+
+  const currentBranch = branchNames[CURRENT_NODE] || "Sucursal";
+
   const menuItems = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/" },
     { text: "Inventario", icon: <InventoryIcon />, path: "/inventory" },
     { text: "Red de Inventarios", icon: <NetworkIcon />, path: "/network" },
     { text: "Solicitudes", icon: <RequestIcon />, path: "/requests" },
     { text: "Donaciones", icon: <DonationIcon />, path: "/donations" },
-    { text: "Beneficiarios", icon: <BeneficiaryIcon />, path: "/beneficiaries" },
+    {
+      text: "Beneficiarios",
+      icon: <BeneficiaryIcon />,
+      path: "/beneficiaries",
+    },
     { text: "Historial", icon: <HistoryIcon />, path: "/" },
   ];
 
@@ -83,7 +99,7 @@ const Sidebar = () => {
                 fontWeight: "bold",
               }}
             >
-              La Paz
+              {currentBranch}
             </Typography>
           </Box>
 
@@ -97,6 +113,7 @@ const Sidebar = () => {
               <ListItemButton
                 key={item.text}
                 onClick={() => navigate(item.path)}
+                selected={location.pathname === item.path}
                 sx={{
                   borderRadius: 3,
                   marginBottom: 1,

@@ -1,15 +1,36 @@
+import React, { useEffect, useState } from "react";
+
 import Sidebar from "../components/layout/Sidebar";
 import { Box, Typography } from "@mui/material";
 import { Inventory2, People, Mail, Warning } from "@mui/icons-material";
 import StatCard from "../components/dashboard/StatCard";
 import InfoPanel from "../components/dashboard/InfoPanel";
+import { getProducts } from "../services/api";
 
 const Dashboard = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const data = await getProducts();
+        setProducts(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
   const stats = [
     {
       title: "Productos en Stock",
-      value: 0,
-      description: "0 tipos diferentes",
+      value: loading ? "..." : products.length,
+      description: "productos totales",
       icon: <Inventory2 />,
       iconBg: "#FFF1E6",
       iconColor: "#F97316",

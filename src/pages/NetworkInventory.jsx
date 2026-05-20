@@ -1,173 +1,135 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 
-import { Box, Typography, Paper, Pagination } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Paper,
+  Pagination,
+  CircularProgress,
+} from "@mui/material";
 
 import Sidebar from "../components/layout/Sidebar";
 import SearchBar from "../components/inventory/SearchBar";
 import InventoryTable from "../components/inventory/InventoryTable";
 import RequestProductModal from "../components/network/RequestProductModal";
 import BranchSelector from "../components/network/BranchSelector";
+import { getBranchProducts } from "../services/api";
 
 const NetworkInventory = () => {
-  //Nodo actual, aquí se detectará desde el backend (supongo) que sucursal es.
-  //quiero creer que con la IP
-  const currentNode = "La Paz";
-
-  //Los productos vendrán del backend
-  const branches = [
+  //Nodo actual
+  const CURRENT_NODE = import.meta.env.VITE_CURRENT_NODE;
+  //Todas las sucursales
+  const allBranches = [
     {
       id: 1,
-      branchName: "Loreto",
-      products: [
-        {
-          id: 1,
-          name: "Arroz",
-          quantity: 100,
-          unit: "kg",
-          category: "Granos",
-        },
-        {
-          id: 2,
-          name: "Frijoles",
-          quantity: 50,
-          unit: "kg",
-          category: "Granos",
-        },
-      ],
+      key: "lapaz",
+      branchName: "La Paz",
     },
     {
       id: 2,
+      key: "comondu",
       branchName: "Comondú",
-      products: [
-        {
-          id: 3,
-          name: "Leche",
-          quantity: 20,
-          unit: "L",
-          category: "Lácteos",
-        },
-      ],
     },
     {
       id: 3,
+      key: "loreto",
+      branchName: "Loreto",
+    },
+    {
+      id: 4,
+      key: "mulege",
       branchName: "Mulegé",
-      products: [
-        {
-          id: 1,
-          name: "Arroz",
-          quantity: 100,
-          unit: "kg",
-          category: "Granos",
-        },
-        {
-          id: 2,
-          name: "Frijoles",
-          quantity: 50,
-          unit: "kg",
-          category: "Granos",
-        },
-        {
-          id: 3,
-          name: "Frijoles",
-          quantity: 50,
-          unit: "kg",
-          category: "Granos",
-        },
-        {
-          id: 4,
-          name: "Frijoles",
-          quantity: 50,
-          unit: "kg",
-          category: "Granos",
-        },
-        {
-          id: 5,
-          name: "Frijoles",
-          quantity: 50,
-          unit: "kg",
-          category: "Granos",
-        },
-        {
-          id: 6,
-          name: "Frijoles",
-          quantity: 50,
-          unit: "kg",
-          category: "Granos",
-        },
-        {
-          id: 7,
-          name: "Frijoles",
-          quantity: 50,
-          unit: "kg",
-          category: "Granos",
-        },
-        {
-          id: 8,
-          name: "Manzana",
-          quantity: 50,
-          unit: "kg",
-          category: "Frutas y Verduras",
-        },
-      ],
     },
   ];
 
-  //Excluir nodo actual
+  //Excluir nodo actual del selector
   const availableBranches = useMemo(() => {
-    return branches.filter((branch) => branch.branchName !== currentNode);
-  }, []);
+    return allBranches.filter((branch) => branch.key !== CURRENT_NODE);
+  }, [CURRENT_NODE]);
 
-  //Selector de sucursal
-  const [selectedBranchId, setSelectedBranchId] = useState(
-    availableBranches[0]?.id || "",
-  );
-
+  const [selectedBranchId, setSelectedBranchId] = useState("");
+  const [branchProducts, setBranchProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   //Paginación
   const [page, setPage] = useState(1);
   const productsPerPage = 5;
+
   const [openModal, setOpenModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedBranch, setSelectedBranch] = useState("");
+
+  //Inicializar selector
+  useEffect(() => {
+    if (availableBranches.length > 0 && !selectedBranchId) {
+      setSelectedBranchId(availableBranches[0].id);
+    }
+  }, [availableBranches, selectedBranchId]);
 
   const selectedBranchData = useMemo(() => {
     return availableBranches.find((branch) => branch.id === selectedBranchId);
   }, [selectedBranchId, availableBranches]);
 
-  //Productos filtrados
-  const filteredProducts = useMemo(() => {
-    if (!selectedBranchData) return [];
+  //Obtener productos
+  useEffect(() => {
+    const fetchProducts = async () => {
+      if (!selectedBranchData) return;
+      try {
+        setLoading(true);
+        setError("");
+        setBranchProducts([]);
 
-    return selectedBranchData.products.filter((product) =>
+        const data = await getBranchProducts(selectedBranchData.key);
+        const formattedProducts = data.map((product) => ({
+          id: product.id,
+          name: product.nombre,
+          category: product.categoria?.nombre || "Sin categoría",
+          quantity: product.cantidad,
+          //luego esto vendrá del backend
+          unit: product.unidad,
+        }));
+
+        setBranchProducts(formattedProducts);
+      } catch (error) {
+        console.error(error);
+        setError("Error cargando productos");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [selectedBranchData]);
+
+  const filteredProducts = useMemo(() => {
+    return branchProducts.filter((product) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
-  }, [searchTerm, selectedBranchData]);
+  }, [branchProducts, searchTerm]);
 
-  //Lógica de paginación
   const paginatedProducts = useMemo(() => {
     const start = (page - 1) * productsPerPage;
-
     const end = start + productsPerPage;
-
     return filteredProducts.slice(start, end);
   }, [filteredProducts, page]);
 
-  //Páginas totales
+  //Total páginas
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
-  //Cambio de sucursal
+  //Cambiar sucursal
   const handleBranchChange = (event) => {
     setSelectedBranchId(event.target.value);
     setPage(1);
     setSearchTerm("");
   };
 
+  //Modal
   const handleOpenModal = (product, branchName) => {
     setSelectedProduct(product);
     setSelectedBranch(branchName);
     setOpenModal(true);
   };
-
   const handleCloseModal = () => {
     setOpenModal(false);
   };
@@ -206,6 +168,7 @@ const NetworkInventory = () => {
           >
             Red de Inventarios
           </Typography>
+
           <BranchSelector
             branches={availableBranches}
             selectedBranch={selectedBranchId}
@@ -244,29 +207,50 @@ const NetworkInventory = () => {
           >
             Productos Totales ({filteredProducts.length})
           </Typography>
-          <InventoryTable
-            products={paginatedProducts}
-            showRequestButton
-            onRequest={handleOpenModal}
-            branchName={selectedBranchData?.branchName}
-          />
-
-          {/* Paginación */}
-          {totalPages > 1 && (
+          {loading ? (
             <Box
               sx={{
                 display: "flex",
                 justifyContent: "center",
-                marginTop: 4,
+                paddingY: 8,
               }}
             >
-              <Pagination
-                count={totalPages}
-                page={page}
-                onChange={(event, value) => setPage(value)}
-                color="primary"
-              />
+              <CircularProgress />
             </Box>
+          ) : error ? (
+            <Box
+              sx={{
+                paddingY: 8,
+                textAlign: "center",
+              }}
+            >
+              <Typography color="error">{error}</Typography>
+            </Box>
+          ) : (
+            <>
+              <InventoryTable
+                products={paginatedProducts}
+                showRequestButton
+                onRequest={handleOpenModal}
+                branchName={selectedBranchData?.branchName}
+              />
+              {totalPages > 1 && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    marginTop: 4,
+                  }}
+                >
+                  <Pagination
+                    count={totalPages}
+                    page={page}
+                    onChange={(event, value) => setPage(value)}
+                    color="primary"
+                  />
+                </Box>
+              )}
+            </>
           )}
         </Paper>
         <RequestProductModal
