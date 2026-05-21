@@ -35,4 +35,15 @@ export const getBranchProducts = async (branch) => {
     console.error(`Error obteniendo productos de ${branch}:`, error);
     return [];
   }
+
+};
+//Obtener beneficiarios
+export const getBeneficiarios = async () => {
+  try {
+    const response = await api.get(`/api/${CURRENT_NODE}/beneficiarios`);
+    return response.data;
+  } catch (error) {
+    console.error("Error obteniendo beneficiarios:", error);
+    return [];
+  }
 };

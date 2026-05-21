@@ -1,45 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import BeneficiaryStatCard from "../../components/beneficiaries/BeneficiaryStatCard";
 import BeneficiaryCard from "../../components/beneficiaries/BeneficiaryCard";
 import BeneficiaryForm from "../../components/beneficiaries/BeneficiaryForm";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, Typography, CircularProgress } from "@mui/material";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import DeliveryForm from "../../components/beneficiaries/DeliveryForm";
-
-const familias = [
-  {
-    id: 1,
-    name: "Familia Hernández",
-    contact: "Rosa Hernández",
-    members: 5,
-    deliveries: 1,
-    address: "Col. Centro #123",
-    phone: "612-111-2222",
-    registeredAt: "2026-01-15",
-    history: [{ date: "2026-04-10", items: ["5 kg Arroz", "3 kg Frijol"] }],
-  },
-  {
-    id: 2,
-    name: "Familia López",
-    contact: "Pedro López",
-    members: 3,
-    deliveries: 1,
-    address: "Col. Pueblo Nuevo #45",
-    phone: "612-333-4444",
-    registeredAt: "2026-02-20",
-    history: [{ date: "2026-04-05", items: ["2 kg Arroz", "1 kg Aceite"] }],
-  },
-];
+import { getBeneficiarios } from "../../services/api";
 
 const Beneficiaries = () => {
   const [open, setOpen] = useState(false);
-
-  const totalPersonas = familias.reduce((acc, f) => acc + f.members, 0);
+  const [familias, setFamilias] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [deliveryOpen, setDeliveryOpen] = useState(false);
   const [familiaSeleccionada, setFamiliaSeleccionada] = useState(null);
 
+  useEffect(() => {
+    const fetchBeneficiarios = async () => {
+      const data = await getBeneficiarios();
+      const mapped = data.map((b) => ({
+        ...b,
+        name: b.nombre,
+        contact: "",
+        deliveries: b.entregas.length,
+        members: 0,
+        address: "",
+        phone: "",
+        registeredAt: "",
+        history: b.entregas.map((e) => ({
+          date: new Date(e.fecha).toLocaleDateString("es-MX"),
+          items: [`${e.cantidad} producto(s)`],
+        })),
+      }));
+      setFamilias(mapped);
+      setLoading(false);
+    };
+    fetchBeneficiarios();
+  }, []);
+
+  const totalPersonas = familias.reduce((acc, f) => acc + (f.members ?? 0), 0);
 
   const handleNuevaEntrega = (family) => {
     setFamiliaSeleccionada(family);
@@ -100,15 +100,21 @@ const Beneficiaries = () => {
           />
         </Box>
 
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {familias.map((family) => (
-            <BeneficiaryCard
-              key={family.id}
-              family={family}
-              onNuevaEntrega={handleNuevaEntrega}
-            />
-          ))}
-        </Box>
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", marginTop: 4 }}>
+            <CircularProgress color="warning" />
+          </Box>
+        ) : (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {familias.map((family) => (
+              <BeneficiaryCard
+                key={family.id}
+                family={family}
+                onNuevaEntrega={handleNuevaEntrega}
+              />
+            ))}
+          </Box>
+        )}
       </div>
 
       <BeneficiaryForm open={open} setOpen={setOpen} />
