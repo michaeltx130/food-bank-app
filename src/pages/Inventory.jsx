@@ -17,8 +17,6 @@ import AddProductModal from "../components/inventory/AddProductModal";
 import { getProducts } from "../services/api";
 
 const Inventory = () => {
-  //const CURRENT_NODE = "lapaz"; // Cambia esto según el nodo que quieras consultar
-
   const [searchTerm, setSearchTerm] = useState("");
   //Paginación
   const [currentPage, setCurrentPage] = useState(1);
@@ -82,6 +80,10 @@ const Inventory = () => {
   };
   const handleClose = () => {
     setOpenModal(false);
+  };
+
+  const handleProductCreated = (newProduct) => {
+    setProducts((prev) => [newProduct, ...prev]);
   };
 
   if (loading) {
@@ -199,7 +201,11 @@ const Inventory = () => {
           )}
         </Paper>
         {/* Modal */}
-        <AddProductModal open={openModal} handleClose={handleClose} />
+        <AddProductModal
+          open={openModal}
+          handleClose={handleClose}
+          onProductCreated={handleProductCreated}
+        />
       </Box>
     </Box>
   );

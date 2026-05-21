@@ -35,7 +35,6 @@ export const getBranchProducts = async (branch) => {
     console.error(`Error obteniendo productos de ${branch}:`, error);
     return [];
   }
-
 };
 //Obtener beneficiarios
 export const getBeneficiarios = async () => {
@@ -46,4 +45,19 @@ export const getBeneficiarios = async () => {
     console.error("Error obteniendo beneficiarios:", error);
     return [];
   }
+};
+
+//Crear producto
+export const createProduct = async (productData) => {
+  const response = await axios.post(
+    `${API_URL}/api/${CURRENT_NODE}/productos`,
+    productData,
+  );
+  return response.data;
+};
+
+//Obtener categorías
+export const getCategories = async () => {
+  const response = await axios.get(`${API_URL}/api/${CURRENT_NODE}/categorias`);
+  return response.data;
 };

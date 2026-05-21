@@ -1,4 +1,5 @@
 import React from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,8 +9,66 @@ import {
   Button,
   MenuItem,
 } from "@mui/material";
+import LoadingButton from "@mui/lab/LoadingButton";
+import { createProduct, getCategories } from "../../services/api";
 
-const AddProductModal = ({ open, handleClose }) => {
+const AddProductModal = ({ open, handleClose, onProductCreated }) => {
+  const [name, setName] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [unit, setUnit] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await getCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const handleSubmit = async () => {
+    if (loading) return;
+    try {
+      setLoading(true);
+      const createdProduct = await createProduct({
+        nombre: name,
+        categoria_id: Number(categoryId),
+        cantidad: Number(quantity),
+      });
+
+      const formattedProduct = {
+        id: createdProduct.id,
+        name: createdProduct.nombre,
+        category:
+          categories.find((cat) => cat.id === Number(categoryId))?.nombre ||
+          "Sin categoría",
+        quantity: createdProduct.cantidad,
+        //luego esto vendrá del backend
+        unit: createdProduct.unidad,
+      };
+
+      onProductCreated(formattedProduct);
+
+      handleClose();
+
+      setName("");
+      setQuantity("");
+      setUnit("");
+      setCategoryId("");
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Dialog
       open={open}
@@ -41,6 +100,8 @@ const AddProductModal = ({ open, handleClose }) => {
           fullWidth
           label="Producto"
           placeholder="Alimento/producto"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           sx={{ marginBottom: 3 }}
         />
 
@@ -53,9 +114,22 @@ const AddProductModal = ({ open, handleClose }) => {
             marginBottom: 3,
           }}
         >
-          <TextField fullWidth label="Cantidad" type="number" />
+          <TextField
+            fullWidth
+            label="Cantidad"
+            type="number"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+          />
 
-          <TextField fullWidth select label="Unidad" defaultValue="">
+          <TextField
+            fullWidth
+            select
+            label="Unidad"
+            defaultValue=""
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+          >
             <MenuItem value="unidad">Unidad(s)</MenuItem>
             <MenuItem value="kg">Kg</MenuItem>
             <MenuItem value="gr">Gramos</MenuItem>
@@ -70,13 +144,16 @@ const AddProductModal = ({ open, handleClose }) => {
           select
           label="Categoría"
           defaultValue=""
+          value={categoryId}
+          onChange={(e) => setCategoryId(e.target.value)}
           sx={{ marginBottom: 4 }}
         >
-          <MenuItem value="legumbres">Legumbres</MenuItem>
-          <MenuItem value="lacteos">Lácteos</MenuItem>
-          <MenuItem value="enlatados">Enlatados</MenuItem>
-          <MenuItem value="liquidos">Liquidos</MenuItem>
-          <MenuItem value="frescos">Frutas y Verduras</MenuItem>
+          {/*Las categorias vienen del backend*/}
+          {categories.map((category) => (
+            <MenuItem key={category.id} value={category.id}>
+              {category.nombre}
+            </MenuItem>
+          ))}
         </TextField>
 
         {/* Buttons */}
@@ -99,18 +176,24 @@ const AddProductModal = ({ open, handleClose }) => {
             Cancelar
           </Button>
 
-          <Button
+          <LoadingButton
             fullWidth
             variant="contained"
+            loading={loading}
+            disabled={loading}
+            onClick={handleSubmit}
             sx={{
               borderRadius: "16px",
               paddingY: 1.5,
               textTransform: "none",
               backgroundColor: "#F97316",
+              "&:hover": {
+                backgroundColor: "#EA580C",
+              },
             }}
           >
             Agregar producto
-          </Button>
+          </LoadingButton>
         </Box>
       </DialogContent>
     </Dialog>
