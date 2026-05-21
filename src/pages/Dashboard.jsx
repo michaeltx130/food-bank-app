@@ -5,18 +5,29 @@ import { Box, Typography } from "@mui/material";
 import { Inventory2, People, Mail, Warning } from "@mui/icons-material";
 import StatCard from "../components/dashboard/StatCard";
 import InfoPanel from "../components/dashboard/InfoPanel";
-import { getProducts } from "../services/api";
+import { getProducts,  getBeneficiarios } from "../services/api";
 
 const Dashboard = () => {
   const [products, setProducts] = useState([]);
+  const [familias, setFamilias] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const data = await getProducts();
-        setProducts(data);
+           const [
+          productsData,
+          familiasData
+        ] = await Promise.all([
+
+          getProducts(),
+          getBeneficiarios()
+
+        ]);
+
+        setProducts(productsData);
+        setFamilias(familiasData);
       } catch (error) {
         console.error(error);
       } finally {
@@ -37,14 +48,11 @@ const Dashboard = () => {
     },
 
     {
-      title: "Familias Registradas",
-      value: 0,
-      description: "0 personas",
-      icon: <People />,
-      iconBg: "#ECFDF5",
-      iconColor: "#059669",
+    title: "Familias Registradas",
+    value: loading ? "..." : familias.length,
+    description: "beneficiarios registrados",
     },
-
+    
     {
       title: "Solicitudes Recibidas",
       value: 0,
