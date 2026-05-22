@@ -1,52 +1,55 @@
-import { useState, useEffect } from "react";
-import {Box, Button, Typography, Dialog, DialogContent,TextField, MenuItem, CircularProgress, Alert} from "@mui/material";
-import { getProducts, createDonacion } from "../../services/api";
+import { useState } from "react";
+import {
+  Dialog, DialogContent, Typography, Box,
+  TextField, Button, MenuItem, Alert,
+} from "@mui/material";
+import LoadingButton from "@mui/lab/LoadingButton";
+import { createDonacion } from "../../services/api";
 
 const DonationForm = ({ open, setOpen, onSuccess }) => {
-  const [productos, setProductos] = useState([]);
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState(null);
-  const [success, setSuccess]     = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState(null);
+  const [success, setSuccess] = useState(false);
 
   const [form, setForm] = useState({
     donante_nombre: "",
-    producto_id:    "",
-    cantidad:       "",
+    producto_nombre: "",  // ← texto libre, ya no producto_id
+    cantidad: "",
+    unit: "",
   });
-
-  useEffect(() => {
-    if (!open) return;
-    setError(null);
-    setSuccess(false);
-    getProducts().then(setProductos).catch(() => setError("Error al cargar productos."));
-  }, [open]);
 
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
+  const handleClose = () => {
+    if (loading) return;
+    setOpen(false);
+    setError(null);
+    setSuccess(false);
+    setForm({ donante_nombre: "", producto_nombre: "", cantidad: "", unit: "" });
+  };
+
   const handleSubmit = async () => {
-    if (!form.donante_nombre.trim()) return setError("El nombre del donante es requerido.");
-    if (!form.producto_id)           return setError("Selecciona un producto.");
-    if (Number(form.cantidad) <= 0)  return setError("La cantidad debe ser mayor a 0.");
+    if (loading) return;
+    if (!form.donante_nombre.trim())  return setError("El nombre del donante es requerido.");
+    if (!form.producto_nombre.trim()) return setError("El nombre del producto es requerido.");
+    if (Number(form.cantidad) <= 0)   return setError("La cantidad debe ser mayor a 0.");
+    if (!form.unit)                   return setError("Selecciona una unidad.");
 
     setLoading(true);
     setError(null);
 
-   try {
-  await createDonacion({
-    donante:     form.donante_nombre.trim(),
-    producto_id: Number(form.producto_id),
-    cantidad:    Number(form.cantidad),
-  });
+    try {
+      await createDonacion({
+        donante:  form.donante_nombre.trim(),
+        producto: form.producto_nombre.trim(),  // ← nombre libre
+        cantidad: Number(form.cantidad),
+        unit:     form.unit,
+      });
 
-  setSuccess(true);
-  onSuccess?.();        
-  setTimeout(() => {
-    setOpen(false);
-    setForm({ donante_nombre: "", producto_id: "", cantidad: 0 });
-    setSuccess(false);
-  }, 1200);
-
+      setSuccess(true);
+      onSuccess?.();
+      setTimeout(handleClose, 1200);
     } catch {
       setError("Error al registrar la donación. Intenta de nuevo.");
     } finally {
@@ -57,83 +60,89 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
   return (
     <Dialog
       open={open}
-      onClose={() => !loading && setOpen(false)}
+      onClose={handleClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{ sx: { borderRadius: "24px" } }}
+      PaperProps={{ sx: { borderRadius: "32px", padding: 2 } }}
     >
-      <DialogContent sx={{ padding: "40px" }}>
-        <Typography variant="h5" fontWeight="bold" mb={3}>
-          Registrar Donacion
+      <DialogContent>
+        <Typography variant="h4" sx={{ fontWeight: "bold", color: "#171717", marginBottom: 4 }}>
+          Registrar Donación
         </Typography>
 
-        {error   && <Alert severity="error"   sx={{ mb: 2 }}>{error}</Alert>}
-        {success && <Alert severity="success" sx={{ mb: 2 }}>¡Donación registrada!</Alert>}
+        {error   && <Alert severity="error"   sx={{ mb: 3 }}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{ mb: 3 }}>¡Donación registrada!</Alert>}
 
-        <Typography variant="caption" color="text.secondary"
-          sx={{ textTransform: "uppercase", letterSpacing: 1 }}>
-          Donante
-        </Typography>
+        {/* Donante */}
         <TextField
-          fullWidth name="donante_nombre"
+          fullWidth
+          label="Donante"
+          placeholder="Nombre del donante"
+          name="donante_nombre"
           value={form.donante_nombre}
           onChange={handleChange}
-          placeholder="Nombre del donante"
-          sx={{ mb: 3, mt: 1 }}
+          sx={{ marginBottom: 3 }}
         />
 
-        <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="caption" color="text.secondary"
-              sx={{ textTransform: "uppercase", letterSpacing: 1 }}>
-              Producto
-            </Typography>
-            <TextField
-              select fullWidth name="producto_id"
-              value={form.producto_id}
-              onChange={handleChange}
-              sx={{ mt: 1 }}
-            >
-              {productos.map((p) => (
-                <MenuItem key={p.id} value={p.id}>
-                  {p.nombre}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Box>
+        {/* Producto — texto libre, igual que AddProductModal */}
+        <TextField
+          fullWidth
+          label="Producto"
+          placeholder="Alimento/producto"
+          name="producto_nombre"
+          value={form.producto_nombre}
+          onChange={handleChange}
+          sx={{ marginBottom: 3 }}
+        />
 
-          <Box sx={{ width: "200px" }}>
-            <Typography variant="caption" color="text.secondary"
-              sx={{ textTransform: "uppercase", letterSpacing: 1 }}>
-              Cantidad estimada (kg)
-            </Typography>
-            <TextField
-              type="number" fullWidth name="cantidad"
-              value={form.cantidad}
-              onChange={handleChange}
-              inputProps={{ min: 0 }}
-              sx={{ mt: 1 }}
-            />
-          </Box>
+        {/* Cantidad + Unidad */}
+        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, marginBottom: 4 }}>
+          <TextField
+            fullWidth
+            label="Cantidad"
+            type="number"
+            name="cantidad"
+            value={form.cantidad}
+            onChange={handleChange}
+            inputProps={{ min: 0 }}
+          />
+          <TextField
+            fullWidth select
+            label="Unidad"
+            name="unit"
+            value={form.unit}
+            onChange={handleChange}
+          >
+            <MenuItem value="pz">Pz</MenuItem>
+            <MenuItem value="kg">Kg</MenuItem>
+            <MenuItem value="gr">Gramos</MenuItem>
+            <MenuItem value="L">Litros</MenuItem>
+            <MenuItem value="ml">Mililitros</MenuItem>
+          </TextField>
         </Box>
 
+        {/* Buttons */}
         <Box sx={{ display: "flex", gap: 2 }}>
           <Button
             fullWidth variant="outlined"
-            onClick={() => setOpen(false)}
-            disabled={loading}
-            sx={{ borderRadius: 3, textTransform: "none", py: 1.5 }}
+            onClick={handleClose}
+            sx={{ borderRadius: "16px", paddingY: 1.5, textTransform: "none" }}
           >
             Cancelar
           </Button>
-          <Button
-            fullWidth variant="contained" color="warning"
-            onClick={handleSubmit}
+          <LoadingButton
+            fullWidth variant="contained"
+            loading={loading}
             disabled={loading}
-            sx={{ borderRadius: 3, textTransform: "none", py: 1.5 }}
+            onClick={handleSubmit}
+            sx={{
+              borderRadius: "16px", paddingY: 1.5, textTransform: "none",
+              backgroundColor: "#F97316",
+              "&:hover": { backgroundColor: "#EA580C" },
+            }}
           >
-            {loading ? <CircularProgress size={22} color="inherit" /> : "Registrar donacion"}
-          </Button>
+            Registrar donación
+          </LoadingButton>
         </Box>
       </DialogContent>
     </Dialog>

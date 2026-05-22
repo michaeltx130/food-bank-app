@@ -16,11 +16,11 @@ const Donation = () => {
   const fetchDonaciones = async () => {
   const data = await getDonaciones();
   const mapped = data.map((d) => ({
-    id: d.id,
-    donor: d.donante,
-    description: `${d.cantidad} ${d.producto?.nombre || "producto(s)"}`,
-    date: new Date(d.fecha).toLocaleDateString("es-MX"),
-  }));
+  id: d.id,
+  donor: d.donante,
+  description: `${d.cantidad} ${d.producto?.unit || ""} ${d.producto?.nombre || "producto"}`.trim(),
+  date: new Date(d.fecha).toLocaleDateString("es-MX"),
+}));
   setDonaciones(mapped);
   setLoading(false);
 };
@@ -95,7 +95,14 @@ useEffect(() => {
         </Box>
       </div>
 
-      <DonationForm open={open} setOpen={setOpen} onSuccess={fetchDonaciones} />
+      <DonationForm
+  open={open}
+  setOpen={setOpen}
+  onSuccess={() => {
+    fetchDonaciones();
+    window.dispatchEvent(new CustomEvent("inventario:actualizar"));
+  }}
+/>
     </div>
   );
 };
