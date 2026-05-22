@@ -1,32 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../../components/layout/Sidebar";
 import DonationStatCard from "../../components/donations/DonationStatCard";
 import DonationHistoryCard from "../../components/donations/DonationHistoryCard";
 import DonationForm from "../../components/donations/DonationForm";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, Typography, CircularProgress } from "@mui/material";
 import CardGiftcardOutlinedIcon from "@mui/icons-material/CardGiftcardOutlined";
 import ApartmentOutlinedIcon from "@mui/icons-material/ApartmentOutlined";
-
-const donaciones = [
-  { id: 1, donor: "Familia Rodríguez", 
-    description: "50 lata de Atún enlatado", 
-    date: "2026-04-18" },
-  { id: 2, donor: "Supermercados Aramburo",
-     description: "100 kg de Arroz",
-    date: "2026-04-15" },
-  { id: 3, donor: "Pollo pechugon", 
-    description: "50 kg de Pollo", 
-    date: "2026-04-17" },
-];
+import { getDonaciones } from "../../services/api";
 
 const Donation = () => {
   const [open, setOpen] = useState(false);
+  const [donaciones, setDonaciones] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchDonaciones = async () => {
+  const data = await getDonaciones();
+  const mapped = data.map((d) => ({
+    id: d.id,
+    donor: d.donante,
+    description: `${d.cantidad} ${d.producto?.nombre || "producto(s)"}`,
+    date: new Date(d.fecha).toLocaleDateString("es-MX"),
+  }));
+  setDonaciones(mapped);
+  setLoading(false);
+};
+
+useEffect(() => {
+  fetchDonaciones();
+}, []);
+
+  const totalProductos = donaciones.reduce((acc, d) => {
+    const num = parseInt(d.description);
+    return acc + (isNaN(num) ? 0 : num);
+  }, 0);
 
   return (
     <div style={{ display: "flex", backgroundColor: "#f3f4f6", minHeight: "100vh" }}>
       <Sidebar />
 
-      <div style={{ padding: "40px", flex: 1 }}>
+      <div style={{ padding: "40px", flex: 1, overflowY: "auto", height: "100vh" }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
           <h1 style={{ fontSize: "48px", margin: 0 }}>Donaciones</h1>
           <Button
@@ -47,7 +59,7 @@ const Donation = () => {
           />
           <DonationStatCard
             icon={<ApartmentOutlinedIcon sx={{ color: "#3b82f6" }} />}
-            value={200}
+            value={totalProductos}
             label="Productos recibidos"
           />
         </Box>
@@ -63,20 +75,27 @@ const Donation = () => {
           <Typography variant="h6" fontWeight="bold" mb={3}>
             Historial de Donaciones
           </Typography>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {donaciones.map((d) => (
-              <DonationHistoryCard
-                key={d.id}
-                donor={d.donor}
-                description={d.description}
-                date={d.date}
-              />
-            ))}
-          </Box>
+
+          {loading ? (
+            <Box sx={{ display: "flex", justifyContent: "center", paddingY: 4 }}>
+              <CircularProgress color="warning" />
+            </Box>
+          ) : (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {donaciones.map((d) => (
+                <DonationHistoryCard
+                  key={d.id}
+                  donor={d.donor}
+                  description={d.description}
+                  date={d.date}
+                />
+              ))}
+            </Box>
+          )}
         </Box>
       </div>
 
-      <DonationForm open={open} setOpen={setOpen} />
+      <DonationForm open={open} setOpen={setOpen} onSuccess={fetchDonaciones} />
     </div>
   );
 };

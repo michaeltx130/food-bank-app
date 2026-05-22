@@ -16,29 +16,25 @@ const Beneficiaries = () => {
   const [deliveryOpen, setDeliveryOpen] = useState(false);
   const [familiaSeleccionada, setFamiliaSeleccionada] = useState(null);
 
-  useEffect(() => {
-    const fetchBeneficiarios = async () => {
-      const data = await getBeneficiarios();
-      const mapped = data.map((b) => ({
-        ...b,
-        name: b.nombre,
-        contact: "",
-        deliveries: b.entregas.length,
-        members: 0,
-        address: "",
-        phone: "",
-        registeredAt: "",
-        history: b.entregas.map((e) => ({
-          date: new Date(e.fecha).toLocaleDateString("es-MX"),
-          items: [`${e.cantidad} producto(s)`],
-        })),
-      }));
-      setFamilias(mapped);
-      setLoading(false);
-    };
-    fetchBeneficiarios();
-  }, []);
+  const fetchBeneficiarios = async () => {
+  const data = await getBeneficiarios();
+  const mapped = data.map((b) => ({
+    ...b,
+    name: b.nombre,
+    members: b.familia?.cantidad_miembros ?? 0,
+    deliveries: b.entregas?.length ?? 0,
+    history: b.entregas?.map((e) => ({
+      date: new Date(e.fecha).toLocaleDateString("es-MX"),
+      items: [`${e.cantidad} ${e.producto?.nombre ?? "producto"}`],
+    })) ?? [],
+  }));
+  setFamilias(mapped);
+  setLoading(false);
+};
 
+useEffect(() => {
+  fetchBeneficiarios();
+}, []);
   const totalPersonas = familias.reduce((acc, f) => acc + (f.members ?? 0), 0);
 
   const handleNuevaEntrega = (family) => {
@@ -47,16 +43,10 @@ const Beneficiaries = () => {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        backgroundColor: "#f3f4f6",
-        minHeight: "100vh",
-      }}
-    >
-      <Sidebar />
+     <div style={{ display: "flex", backgroundColor: "#f3f4f6", minHeight: "100vh" }}>
+       <Sidebar />
 
-      <div style={{ padding: "40px", flex: 1 }}>
+       <div style={{ padding: "40px", flex: 1, overflowY: "auto", height: "100vh" }}>
         <Box
           sx={{
             display: "flex",
@@ -117,11 +107,12 @@ const Beneficiaries = () => {
         )}
       </div>
 
-      <BeneficiaryForm open={open} setOpen={setOpen} />
+     <BeneficiaryForm open={open} setOpen={setOpen} onSuccess={fetchBeneficiarios} />
       <DeliveryForm
         open={deliveryOpen}
         setOpen={setDeliveryOpen}
         family={familiaSeleccionada}
+        onSuccess={fetchBeneficiarios}
       />
     </div>
   );

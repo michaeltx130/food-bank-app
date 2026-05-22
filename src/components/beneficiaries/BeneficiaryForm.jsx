@@ -1,11 +1,54 @@
-import {Box, Button, Typography, Dialog, DialogContent, TextField,} from "@mui/material";
+import { useState } from "react";
+import { Box, Button, Typography, Dialog, DialogContent, TextField, CircularProgress, Alert } from "@mui/material";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
+import { createFamilia } from "../../services/api";
 
-const BeneficiaryForm = ({ open, setOpen }) => {
+const BeneficiaryForm = ({ open, setOpen, onSuccess }) => {
+  const [nombre, setNombre] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [miembros, setMiembros] = useState(0);
+  const [direccion, setDireccion] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleClose = () => {
+    setNombre("");
+    setTelefono("");
+    setMiembros(0);
+    setDireccion("");
+    setError(null);
+    setOpen(false);
+  };
+
+  const handleSubmit = async () => {
+    if (!nombre.trim()) return setError("El nombre es obligatorio.");
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const resultado = await createFamilia({
+        nombre,
+        telefono,
+        cantidad_miembros: Number(miembros),
+        direccion,
+      });
+
+      if (!resultado) return setError("Error al registrar la familia.");
+
+      onSuccess?.();
+      handleClose();
+    } catch {
+      setError("Error al registrar la familia.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Dialog
       open={open}
-      onClose={() => setOpen(false)}
+      onClose={handleClose}
       maxWidth="sm"
       fullWidth
       PaperProps={{ sx: { borderRadius: "24px" } }}
@@ -15,31 +58,51 @@ const BeneficiaryForm = ({ open, setOpen }) => {
           Registrar Nueva Familia
         </Typography>
 
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
         <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 1 }}>
           Nombre de la Familia
         </Typography>
-        <TextField fullWidth sx={{ marginBottom: 3, marginTop: 1 }} />
+        <TextField
+          fullWidth
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          sx={{ marginBottom: 3, marginTop: 1 }}
+        />
 
         <Box sx={{ display: "flex", gap: 2, marginBottom: 3 }}>
           <Box sx={{ flex: 1 }}>
             <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 1 }}>
-              Numero de Telefono
+              Número de Teléfono
             </Typography>
-            <TextField fullWidth sx={{ marginTop: 1 }} />
+            <TextField
+              fullWidth
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              sx={{ marginTop: 1 }}
+            />
           </Box>
           <Box sx={{ flex: 1 }}>
             <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 1 }}>
               Cantidad de Miembros
             </Typography>
-            <TextField type="number" fullWidth defaultValue={0} sx={{ marginTop: 1 }} />
+            <TextField
+              type="number"
+              fullWidth
+              value={miembros}
+              onChange={(e) => setMiembros(e.target.value)}
+              sx={{ marginTop: 1 }}
+            />
           </Box>
         </Box>
 
         <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 1 }}>
-          Direccion / Ubicación
+          Dirección / Ubicación
         </Typography>
         <TextField
           fullWidth
+          value={direccion}
+          onChange={(e) => setDireccion(e.target.value)}
           sx={{ marginBottom: 4, marginTop: 1 }}
           InputProps={{
             startAdornment: <LocationOnOutlinedIcon sx={{ color: "#9ca3af", marginRight: 1 }} />,
@@ -48,20 +111,16 @@ const BeneficiaryForm = ({ open, setOpen }) => {
 
         <Box sx={{ display: "flex", gap: 2 }}>
           <Button
-            fullWidth
-            variant="outlined"
-            onClick={() => setOpen(false)}
+            fullWidth variant="outlined" onClick={handleClose} disabled={loading}
             sx={{ borderRadius: 3, textTransform: "none", paddingY: 1.5 }}
           >
             Cancelar
           </Button>
           <Button
-            fullWidth
-            variant="contained"
-            color="warning"
+            fullWidth variant="contained" color="warning" onClick={handleSubmit} disabled={loading}
             sx={{ borderRadius: 3, textTransform: "none", paddingY: 1.5 }}
           >
-            Registrar Familia
+            {loading ? <CircularProgress size={22} color="inherit" /> : "Registrar Familia"}
           </Button>
         </Box>
       </DialogContent>

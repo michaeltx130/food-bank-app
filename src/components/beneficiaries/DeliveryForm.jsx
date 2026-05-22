@@ -1,23 +1,33 @@
-import { useState } from "react";
-import {Box, Button, Typography, Dialog, DialogContent,TextField, MenuItem, IconButton,} from "@mui/material";
+import { useState, useEffect } from "react";
+import {Box, Button, Typography, Dialog, DialogContent, TextField, MenuItem, IconButton, CircularProgress, Alert} from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import AddIcon from "@mui/icons-material/Add";
+import { getProducts, createEntrega } from "../../services/api";
 
-const inventarioDisponible = [
-  { id: 1, name: "Arroz", stock: 50, unit: "kg" },
-  { id: 2, name: "Frijol", stock: 30, unit: "kg" },
-  { id: 3, name: "Atún enlatado", stock: 24, unit: "latas" },
-  { id: 4, name: "Aceite", stock: 15, unit: "litros" },
-  { id: 5, name: "Harina", stock: 20, unit: "kg" },
-];
-
-const DeliveryForm = ({ open, setOpen, family }) => {
+const DeliveryForm = ({ open, setOpen, family, onSuccess }) => {
   const today = new Date().toISOString().split("T")[0];
 
   const [fecha, setFecha] = useState(today);
-  const [renglones, setRenglones] = useState([
-    { productoId: "", cantidad: "" },
-  ]);
+  const [renglones, setRenglones] = useState([{ productoId: "", cantidad: "" }]);
+  const [productos, setProductos] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setError(null);
+    setSuccess(false);
+    getProducts().then((data) => {
+      const mapped = data.map((p) => ({
+        id: p.id,
+        name: p.nombre,
+        stock: p.cantidad,
+        unit: p.unit || "pz",
+      }));
+      setProductos(mapped);
+    });
+  }, [open]);
 
   const handleAddRenglon = () => {
     setRenglones([...renglones, { productoId: "", cantidad: "" }]);
@@ -34,13 +44,47 @@ const DeliveryForm = ({ open, setOpen, family }) => {
   };
 
   const productosUsados = renglones.map((r) => r.productoId).filter(Boolean);
-
-  const getProducto = (id) => inventarioDisponible.find((p) => p.id === Number(id));
+  const getProducto = (id) => productos.find((p) => p.id === Number(id));
 
   const handleClose = () => {
     setRenglones([{ productoId: "", cantidad: "" }]);
     setFecha(today);
+    setError(null);
+    setSuccess(false);
     setOpen(false);
+  };
+
+  const handleSubmit = async () => {
+    if (!family?.id) return setError("No hay familia seleccionada.");
+    if (renglones.some((r) => !r.productoId || !r.cantidad))
+      return setError("Completa todos los productos y cantidades.");
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const resultados = await Promise.all(
+        renglones.map((r) =>
+          createEntrega({
+            beneficiario_id: family.id,
+            producto_id: Number(r.productoId),
+            cantidad: Number(r.cantidad),
+          })
+        )
+      );
+
+      if (resultados.some((r) => r === null)) {
+        return setError("Error al registrar una o más entregas.");
+      }
+
+      setSuccess(true);
+      onSuccess?.();
+      setTimeout(() => handleClose(), 1200);
+    } catch {
+      setError("Error al registrar la entrega.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -58,6 +102,9 @@ const DeliveryForm = ({ open, setOpen, family }) => {
         <Typography color="text.secondary" fontSize="14px" mb={3}>
           {family?.name}
         </Typography>
+
+        {error   && <Alert severity="error"   sx={{ mb: 2 }}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{ mb: 2 }}>¡Entrega registrada!</Alert>}
 
         <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 1 }}>
           Fecha de entrega
@@ -84,14 +131,12 @@ const DeliveryForm = ({ open, setOpen, family }) => {
               <Box key={index} sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
                 <Box sx={{ flex: 1 }}>
                   <TextField
-                    select
-                    fullWidth
+                    select fullWidth
                     value={renglon.productoId}
                     onChange={(e) => handleChangeRenglon(index, "productoId", e.target.value)}
-                    displayEmpty
                   >
                     <MenuItem value="" disabled>Seleccionar</MenuItem>
-                    {inventarioDisponible.map((p) => (
+                    {productos.map((p) => (
                       <MenuItem
                         key={p.id}
                         value={p.id}
@@ -99,19 +144,13 @@ const DeliveryForm = ({ open, setOpen, family }) => {
                       >
                         <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
                           <span>{p.name}</span>
-                          <Typography
-                            component="span"
-                            fontSize="12px"
-                            color="text.secondary"
-                            sx={{ marginLeft: 2 }}
-                          >
+                          <Typography component="span" fontSize="12px" color="text.secondary" sx={{ marginLeft: 2 }}>
                             disponible: {p.stock} {p.unit}
                           </Typography>
                         </Box>
                       </MenuItem>
                     ))}
                   </TextField>
-
                   {excede && (
                     <Typography fontSize="12px" color="error" mt={0.5}>
                       Excede el stock disponible ({productoSeleccionado.stock} {productoSeleccionado.unit})
@@ -121,9 +160,7 @@ const DeliveryForm = ({ open, setOpen, family }) => {
 
                 <Box sx={{ width: "110px" }}>
                   <TextField
-                    type="number"
-                    fullWidth
-                    placeholder="0"
+                    type="number" fullWidth placeholder="0"
                     value={renglon.cantidad}
                     onChange={(e) => handleChangeRenglon(index, "cantidad", e.target.value)}
                     error={excede}
@@ -153,33 +190,21 @@ const DeliveryForm = ({ open, setOpen, family }) => {
           startIcon={<AddIcon />}
           onClick={handleAddRenglon}
           sx={{
-            textTransform: "none",
-            color: "#e07a2f",
-            paddingLeft: 0,
-            marginBottom: 3,
+            textTransform: "none", color: "#e07a2f", paddingLeft: 0, marginBottom: 3,
             "&:hover": { backgroundColor: "transparent", textDecoration: "underline" },
           }}
         >
           Agregar producto
         </Button>
 
-
         <Box sx={{ display: "flex", gap: 2 }}>
-          <Button
-            fullWidth
-            variant="outlined"
-            onClick={handleClose}
-            sx={{ borderRadius: 3, textTransform: "none", paddingY: 1.5 }}
-          >
+          <Button fullWidth variant="outlined" onClick={handleClose} disabled={loading}
+            sx={{ borderRadius: 3, textTransform: "none", paddingY: 1.5 }}>
             Cancelar
           </Button>
-          <Button
-            fullWidth
-            variant="contained"
-            color="warning"
-            sx={{ borderRadius: 3, textTransform: "none", paddingY: 1.5 }}
-          >
-            Registrar Entrega
+          <Button fullWidth variant="contained" color="warning" onClick={handleSubmit} disabled={loading}
+            sx={{ borderRadius: 3, textTransform: "none", paddingY: 1.5 }}>
+            {loading ? <CircularProgress size={22} color="inherit" /> : "Registrar Entrega"}
           </Button>
         </Box>
       </DialogContent>

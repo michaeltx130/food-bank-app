@@ -61,3 +61,51 @@ export const getCategories = async () => {
   const response = await axios.get(`${API_URL}/api/${CURRENT_NODE}/categorias`);
   return response.data;
 };
+
+//obtener donaciones
+export const getDonaciones = async () => {
+  try {
+    const response = await api.get(`/api/${CURRENT_NODE}/donaciones`);
+    return response.data;
+  } catch (error) {
+    console.error("Error obteniendo donaciones:", error);
+    return [];
+  }
+};
+
+//Crear donacion
+export const createDonacion = async ({ donante, producto_id, cantidad }) => {
+  try {
+    const response = await api.post(`/api/${CURRENT_NODE}/donaciones`, {
+      donante, producto_id, cantidad,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error creando donacion:", error);
+    return null;
+  }
+};
+
+//Crear entrega
+export const createEntrega = async ({ beneficiario_id, producto_id, cantidad }) => {
+  try {
+    const response = await api.post(`/api/${CURRENT_NODE}/entregas`, {
+      beneficiario_id, producto_id, cantidad,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error creando entrega:", error);
+    return null;
+  }
+};
+
+//crear familia
+export const createFamilia = async (familiaData) => {
+  try {
+    const response = await api.post(`/api/${CURRENT_NODE}/familias`, familiaData);
+    return response.data;
+  } catch (error) {
+    console.error("Error creando familia:", error);
+    return null;
+  }
+};
