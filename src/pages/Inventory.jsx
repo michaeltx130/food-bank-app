@@ -42,7 +42,7 @@ const Inventory = () => {
           category: product.categoria?.nombre || "Sin categoría",
           quantity: product.cantidad,
           //luego esto vendrá del backend
-          unit: product.unidad,
+          unit: product.unit,
         }));
 
         setProducts(formattedProducts);
