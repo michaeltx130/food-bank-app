@@ -41,6 +41,7 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
         nombre: name,
         categoria_id: Number(categoryId),
         cantidad: Number(quantity),
+        unit,
       });
 
       const formattedProduct = {
@@ -51,7 +52,7 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
           "Sin categoría",
         quantity: createdProduct.cantidad,
         //luego esto vendrá del backend
-        unit: createdProduct.unidad,
+        unit: createdProduct.unit,
       };
 
       onProductCreated(formattedProduct);
@@ -130,7 +131,7 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
             value={unit}
             onChange={(e) => setUnit(e.target.value)}
           >
-            <MenuItem value="unidad">Unidad(s)</MenuItem>
+            <MenuItem value="pz">Pz</MenuItem>
             <MenuItem value="kg">Kg</MenuItem>
             <MenuItem value="gr">Gramos</MenuItem>
             <MenuItem value="L">Litros</MenuItem>
