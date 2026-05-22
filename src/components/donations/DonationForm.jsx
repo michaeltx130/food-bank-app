@@ -1,22 +1,28 @@
-import { useState } from "react";
-import {
-  Dialog, DialogContent, Typography, Box,
-  TextField, Button, MenuItem, Alert,
-} from "@mui/material";
+import { useState, useEffect } from "react";
+import {Dialog, DialogContent, Typography, Box,TextField, Button, MenuItem, Alert,} from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
-import { createDonacion } from "../../services/api";
+import { getCategories, createDonacion } from "../../services/api";
 
 const DonationForm = ({ open, setOpen, onSuccess }) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState(null);
-  const [success, setSuccess] = useState(false);
+  const [categorias, setCategorias] = useState([]);
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState(null);
+  const [success, setSuccess]       = useState(false);
 
   const [form, setForm] = useState({
-    donante_nombre: "",
-    producto_nombre: "",  // ← texto libre, ya no producto_id
-    cantidad: "",
-    unit: "",
+    donante_nombre:  "",
+    producto_nombre: "",
+    categoria_id:    "",
+    cantidad:        "",
+    unit:            "",
   });
+
+  useEffect(() => {
+    if (!open) return;
+    setError(null);
+    setSuccess(false);
+    getCategories().then(setCategorias).catch(() => setError("Error al cargar categorías."));
+  }, [open]);
 
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -26,7 +32,7 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
     setOpen(false);
     setError(null);
     setSuccess(false);
-    setForm({ donante_nombre: "", producto_nombre: "", cantidad: "", unit: "" });
+    setForm({ donante_nombre: "", producto_nombre: "", categoria_id: "", cantidad: "", unit: "" });
   };
 
   const handleSubmit = async () => {
@@ -41,10 +47,11 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
 
     try {
       await createDonacion({
-        donante:  form.donante_nombre.trim(),
-        producto: form.producto_nombre.trim(),  // ← nombre libre
-        cantidad: Number(form.cantidad),
-        unit:     form.unit,
+        donante:      form.donante_nombre.trim(),
+        producto:     form.producto_nombre.trim(),
+        cantidad:     Number(form.cantidad),
+        unit:         form.unit,
+        categoria_id: form.categoria_id ? Number(form.categoria_id) : null,
       });
 
       setSuccess(true);
@@ -73,7 +80,6 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
         {error   && <Alert severity="error"   sx={{ mb: 3 }}>{error}</Alert>}
         {success && <Alert severity="success" sx={{ mb: 3 }}>¡Donación registrada!</Alert>}
 
-        {/* Donante */}
         <TextField
           fullWidth
           label="Donante"
@@ -84,7 +90,6 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
           sx={{ marginBottom: 3 }}
         />
 
-        {/* Producto — texto libre, igual que AddProductModal */}
         <TextField
           fullWidth
           label="Producto"
@@ -95,7 +100,22 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
           sx={{ marginBottom: 3 }}
         />
 
-        {/* Cantidad + Unidad */}
+        <TextField
+          fullWidth select
+          label="Categoría"
+          name="categoria_id"
+          value={form.categoria_id}
+          onChange={handleChange}
+          sx={{ marginBottom: 3 }}
+        >
+          <MenuItem value="">Sin categoría</MenuItem>
+          {categorias.map((cat) => (
+            <MenuItem key={cat.id} value={cat.id}>
+              {cat.nombre}
+            </MenuItem>
+          ))}
+        </TextField>
+
         <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, marginBottom: 4 }}>
           <TextField
             fullWidth
@@ -121,7 +141,6 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
           </TextField>
         </Box>
 
-        {/* Buttons */}
         <Box sx={{ display: "flex", gap: 2 }}>
           <Button
             fullWidth variant="outlined"

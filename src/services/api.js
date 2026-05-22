@@ -74,21 +74,22 @@ export const getDonaciones = async () => {
 };
 
 //Crear donacion
-export const createDonacion = async ({ donante, producto, cantidad, unit }) => {
-  try {
-    const response = await api.post(`/api/${CURRENT_NODE}/donaciones`, {
-      donante,
-      producto,  
-      cantidad,
-      unit,
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Error creando donacion:", error);
-    throw error;  
-  }
-};
+export const createDonacion = async ({ donante, producto, cantidad, unit, categoria_id }) => {
+  const productoCreado = await createProduct({
+    nombre: producto,
+    cantidad,
+    unit,
+    categoria_id,  
+  });
 
+  const response = await api.post(`/api/${CURRENT_NODE}/donaciones`, {
+    donante,
+    producto_id: productoCreado.id,
+    cantidad,
+  });
+
+  return response.data;
+};
 //Crear entrega
 export const createEntrega = async ({ beneficiario_id, producto_id, cantidad }) => {
   try {
