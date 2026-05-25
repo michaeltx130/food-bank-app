@@ -8,6 +8,7 @@ import {
   TextField,
   Button,
   MenuItem,
+  Alert,
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { createProduct, getCategories } from "../../services/api";
@@ -19,8 +20,15 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
+    if (!open) return;
+
+    setErrors({});
+    setSuccess(false);
+
     const fetchCategories = async () => {
       try {
         const data = await getCategories();
@@ -29,13 +37,34 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
         console.error(error);
       }
     };
-
     fetchCategories();
-  }, []);
+  }, [open]);
 
   const handleSubmit = async () => {
     if (loading) return;
+    const newErrors = {};
+
+    if (!name.trim()) {
+      newErrors.name = "Ingresa el nombre del producto";
+    }
+    if (!quantity) {
+      newErrors.quantity = "Ingresa una cantidad";
+    } else if (Number(quantity) <= 0) {
+      newErrors.quantity = "La cantidad debe ser mayor a 0";
+    }
+    if (!unit) {
+      newErrors.unit = "Selecciona una unidad";
+    }
+    if (!categoryId) {
+      newErrors.category = "Selecciona una categoría";
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
     try {
+      setErrors({});
+      setSuccess(false);
       setLoading(true);
       const createdProduct = await createProduct({
         nombre: name,
@@ -57,12 +86,16 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
 
       onProductCreated(formattedProduct);
 
-      handleClose();
+      setSuccess(true);
 
-      setName("");
-      setQuantity("");
-      setUnit("");
-      setCategoryId("");
+      setTimeout(() => {
+        handleClose();
+        setName("");
+        setQuantity("");
+        setUnit("");
+        setCategoryId("");
+        setErrors({});
+      }, 1200);
     } catch (error) {
       console.error(error);
     } finally {
@@ -96,16 +129,56 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
           Agregar Producto
         </Typography>
 
+        {success && (
+          <Alert severity="success" sx={{ mb: 3 }}>
+            ¡Producto agregado correctamente!
+          </Alert>
+        )}
+
         {/* Producto */}
         <TextField
           fullWidth
           label="Producto"
           placeholder="Alimento/producto"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            setName(e.target.value);
+
+            setErrors((prev) => ({
+              ...prev,
+              name: "",
+            }));
+          }}
+          error={!!errors.name}
+          helperText={errors.name}
           sx={{ marginBottom: 3 }}
         />
+        {/* Categoría */}
+        <TextField
+          fullWidth
+          select
+          label="Categoría"
+          defaultValue=""
+          value={categoryId}
+          onChange={(e) => {
+            setCategoryId(e.target.value);
 
+            setErrors((prev) => ({
+              ...prev,
+              category: "",
+            }));
+          }}
+          error={!!errors.category}
+          helperText={errors.category}
+          sx={{ marginBottom: 4 }}
+        >
+          {/*Las categorias vienen del backend*/}
+          {categories.map((category) => (
+            <MenuItem key={category.id} value={category.id}>
+              {category.nombre}
+            </MenuItem>
+          ))}
+        </TextField>
         {/* Cantidad + Unidad */}
         <Box
           sx={{
@@ -120,7 +193,17 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
             label="Cantidad"
             type="number"
             value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
+            onChange={(e) => {
+              setQuantity(e.target.value);
+              setErrors((prev) => ({
+                ...prev,
+                quantity: "",
+              }));
+            }}
+            onWheel={(e) => e.target.blur()}
+            error={!!errors.quantity}
+            helperText={errors.quantity}
+            inputProps={{ min: 1 }}
           />
 
           <TextField
@@ -129,7 +212,16 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
             label="Unidad"
             defaultValue=""
             value={unit}
-            onChange={(e) => setUnit(e.target.value)}
+            onChange={(e) => {
+              setUnit(e.target.value);
+
+              setErrors((prev) => ({
+                ...prev,
+                unit: "",
+              }));
+            }}
+            error={!!errors.unit}
+            helperText={errors.unit}
           >
             <MenuItem value="pz">Pz</MenuItem>
             <MenuItem value="kg">Kg</MenuItem>
@@ -138,24 +230,6 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
             <MenuItem value="ml">Mililitros</MenuItem>
           </TextField>
         </Box>
-
-        {/* Categoría */}
-        <TextField
-          fullWidth
-          select
-          label="Categoría"
-          defaultValue=""
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-          sx={{ marginBottom: 4 }}
-        >
-          {/*Las categorias vienen del backend*/}
-          {categories.map((category) => (
-            <MenuItem key={category.id} value={category.id}>
-              {category.nombre}
-            </MenuItem>
-          ))}
-        </TextField>
 
         {/* Buttons */}
         <Box
