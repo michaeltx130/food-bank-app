@@ -178,7 +178,10 @@ const Inventory = () => {
         >
           <SearchBar
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
           />
           <InventoryTable products={currentProducts} />
 

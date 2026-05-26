@@ -74,12 +74,18 @@ export const getDonaciones = async () => {
 };
 
 //Crear donacion
-export const createDonacion = async ({ donante, producto, cantidad, unit, categoria_id }) => {
+export const createDonacion = async ({
+  donante,
+  producto,
+  cantidad,
+  unit,
+  categoria_id,
+}) => {
   const productoCreado = await createProduct({
     nombre: producto,
     cantidad,
     unit,
-    categoria_id,  
+    categoria_id,
   });
 
   const response = await api.post(`/api/${CURRENT_NODE}/donaciones`, {
@@ -91,10 +97,16 @@ export const createDonacion = async ({ donante, producto, cantidad, unit, catego
   return response.data;
 };
 //Crear entrega
-export const createEntrega = async ({ beneficiario_id, producto_id, cantidad }) => {
+export const createEntrega = async ({
+  beneficiario_id,
+  producto_id,
+  cantidad,
+}) => {
   try {
     const response = await api.post(`/api/${CURRENT_NODE}/entregas`, {
-      beneficiario_id, producto_id, cantidad,
+      beneficiario_id,
+      producto_id,
+      cantidad,
     });
     return response.data;
   } catch (error) {
@@ -106,10 +118,44 @@ export const createEntrega = async ({ beneficiario_id, producto_id, cantidad }) 
 //crear familia
 export const createFamilia = async (familiaData) => {
   try {
-    const response = await api.post(`/api/${CURRENT_NODE}/familias`, familiaData);
+    const response = await api.post(
+      `/api/${CURRENT_NODE}/familias`,
+      familiaData,
+    );
     return response.data;
   } catch (error) {
     console.error("Error creando familia:", error);
     return null;
+  }
+};
+
+// Solicitar producto a otra sucursal.
+// Se llama al propio servidor (api) — él sabe que es el origen y enruta a destino.
+export const requestProduct = async (
+  sourceBranchKey,
+  productoId,
+  cantidad,
+  motivo,
+) => {
+  try {
+    const ports = {
+      comondu: 3001,
+      lapaz: 3002,
+      loreto: 3003,
+      mulege: 3004,
+    };
+    const response = await axios.post(
+      `http://localhost:${ports[sourceBranchKey]}/api/red/productos/enviar`,
+      {
+        producto_id: productoId,
+        cantidad,
+        destino: CURRENT_NODE,
+        motivo,
+      },
+    );
+    return response.data;
+  } catch (error) {
+    console.error(`Error solicitando producto a ${sourceBranchKey}:`, error);
+    throw error;
   }
 };

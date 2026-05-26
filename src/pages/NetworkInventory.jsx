@@ -18,47 +18,34 @@ import { getBranchProducts } from "../services/api";
 const NetworkInventory = () => {
   //Nodo actual
   const CURRENT_NODE = import.meta.env.VITE_CURRENT_NODE;
+
   //Todas las sucursales
   const allBranches = [
-    {
-      id: 1,
-      key: "lapaz",
-      branchName: "La Paz",
-    },
-    {
-      id: 2,
-      key: "comondu",
-      branchName: "Comondú",
-    },
-    {
-      id: 3,
-      key: "loreto",
-      branchName: "Loreto",
-    },
-    {
-      id: 4,
-      key: "mulege",
-      branchName: "Mulegé",
-    },
+    { id: 1, key: "lapaz", branchName: "La Paz" },
+    { id: 2, key: "comondu", branchName: "Comondú" },
+    { id: 3, key: "loreto", branchName: "Loreto" },
+    { id: 4, key: "mulege", branchName: "Mulegé" },
   ];
 
   //Excluir nodo actual del selector
-  const availableBranches = useMemo(() => {
-    return allBranches.filter((branch) => branch.key !== CURRENT_NODE);
-  }, [CURRENT_NODE]);
+  const availableBranches = useMemo(
+    () => allBranches.filter((branch) => branch.key !== CURRENT_NODE),
+    [CURRENT_NODE],
+  );
 
   const [selectedBranchId, setSelectedBranchId] = useState("");
   const [branchProducts, setBranchProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  //Paginación
   const [page, setPage] = useState(1);
   const productsPerPage = 5;
 
   const [openModal, setOpenModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [selectedBranch, setSelectedBranch] = useState("");
+  // Guardamos el objeto completo de la sucursal seleccionada para tener
+  // tanto el nombre para mostrar como la clave (key) para la API.
+  const [selectedBranchForModal, setSelectedBranchForModal] = useState(null);
 
   //Inicializar selector
   useEffect(() => {
@@ -67,80 +54,74 @@ const NetworkInventory = () => {
     }
   }, [availableBranches, selectedBranchId]);
 
-  const selectedBranchData = useMemo(() => {
-    return availableBranches.find((branch) => branch.id === selectedBranchId);
-  }, [selectedBranchId, availableBranches]);
+  const selectedBranchData = useMemo(
+    () => availableBranches.find((branch) => branch.id === selectedBranchId),
+    [selectedBranchId, availableBranches],
+  );
 
-  //Obtener productos
+  const fetchProducts = async () => {
+    if (!selectedBranchData) return;
+    try {
+      setLoading(true);
+      setError("");
+
+      const data = await getBranchProducts(selectedBranchData.key);
+      const formattedProducts = data.map((product) => ({
+        id: product.id,
+        name: product.nombre,
+        category: product.categoria?.nombre || "Sin categoría",
+        quantity: product.cantidad,
+        unit: product.unit,
+      }));
+
+      setBranchProducts(formattedProducts);
+    } catch (err) {
+      console.error(err);
+      setError("Error cargando productos");
+    } finally {
+      setLoading(false);
+    }
+  };
+  //Obtener productos al cambiar de sucursal
   useEffect(() => {
-    const fetchProducts = async () => {
-      if (!selectedBranchData) return;
-      try {
-        setLoading(true);
-        setError("");
-        setBranchProducts([]);
-
-        const data = await getBranchProducts(selectedBranchData.key);
-        const formattedProducts = data.map((product) => ({
-          id: product.id,
-          name: product.nombre,
-          category: product.categoria?.nombre || "Sin categoría",
-          quantity: product.cantidad,
-          //luego esto vendrá del backend
-          unit: product.unit,
-        }));
-
-        setBranchProducts(formattedProducts);
-      } catch (error) {
-        console.error(error);
-        setError("Error cargando productos");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProducts();
   }, [selectedBranchData]);
 
-  const filteredProducts = useMemo(() => {
-    return branchProducts.filter((product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
-  }, [branchProducts, searchTerm]);
+  const filteredProducts = useMemo(
+    () =>
+      branchProducts.filter((product) =>
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      ),
+    [branchProducts, searchTerm],
+  );
 
   const paginatedProducts = useMemo(() => {
     const start = (page - 1) * productsPerPage;
-    const end = start + productsPerPage;
-    return filteredProducts.slice(start, end);
+    return filteredProducts.slice(start, start + productsPerPage);
   }, [filteredProducts, page]);
 
-  //Total páginas
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
-  //Cambiar sucursal
+  //Cambiar sucursal en el selector
   const handleBranchChange = (event) => {
     setSelectedBranchId(event.target.value);
     setPage(1);
     setSearchTerm("");
   };
 
-  //Modal
-  const handleOpenModal = (product, branchName) => {
+  //Abrir modal — guardamos el producto y la sucursal completa
+  const handleOpenModal = (product) => {
     setSelectedProduct(product);
-    setSelectedBranch(branchName);
+    setSelectedBranchForModal(selectedBranchData); // { id, key, branchName }
     setOpenModal(true);
   };
+
   const handleCloseModal = () => {
     setOpenModal(false);
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        height: "100vh",
-      }}
-    >
+    <Box sx={{ display: "flex", height: "100vh" }}>
       <Sidebar />
       <Box
         sx={{
@@ -150,6 +131,7 @@ const NetworkInventory = () => {
           overflowY: "auto",
         }}
       >
+        {/* Header */}
         <Box
           sx={{
             display: "flex",
@@ -159,13 +141,7 @@ const NetworkInventory = () => {
             gap: 3,
           }}
         >
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 700,
-              color: "#171717",
-            }}
-          >
+          <Typography variant="h4" sx={{ fontWeight: 700, color: "#171717" }}>
             Red de Inventarios
           </Typography>
 
@@ -175,11 +151,9 @@ const NetworkInventory = () => {
             onChange={handleBranchChange}
           />
         </Box>
-        <Box
-          sx={{
-            marginBottom: 3,
-          }}
-        >
+
+        {/* Buscador */}
+        <Box sx={{ marginBottom: 3 }}>
           <SearchBar
             placeholder="Buscar productos"
             value={searchTerm}
@@ -189,6 +163,8 @@ const NetworkInventory = () => {
             }}
           />
         </Box>
+
+        {/* Tabla */}
         <Paper
           sx={{
             padding: 3,
@@ -207,23 +183,15 @@ const NetworkInventory = () => {
           >
             Productos Totales ({filteredProducts.length})
           </Typography>
+
           {loading ? (
             <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                paddingY: 8,
-              }}
+              sx={{ display: "flex", justifyContent: "center", paddingY: 8 }}
             >
               <CircularProgress />
             </Box>
           ) : error ? (
-            <Box
-              sx={{
-                paddingY: 8,
-                textAlign: "center",
-              }}
-            >
+            <Box sx={{ paddingY: 8, textAlign: "center" }}>
               <Typography color="error">{error}</Typography>
             </Box>
           ) : (
@@ -245,7 +213,7 @@ const NetworkInventory = () => {
                   <Pagination
                     count={totalPages}
                     page={page}
-                    onChange={(event, value) => setPage(value)}
+                    onChange={(_, value) => setPage(value)}
                     color="primary"
                   />
                 </Box>
@@ -253,11 +221,15 @@ const NetworkInventory = () => {
             </>
           )}
         </Paper>
+
+        {/* Modal de solicitud */}
         <RequestProductModal
           open={openModal}
           handleClose={handleCloseModal}
           product={selectedProduct}
-          branchName={selectedBranch}
+          branchName={selectedBranchForModal?.branchName}
+          sourceBranchKey={selectedBranchForModal?.key}
+          onSuccessTransfer={fetchProducts}
         />
       </Box>
     </Box>
