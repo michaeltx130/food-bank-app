@@ -4,6 +4,13 @@ import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
 const CURRENT_NODE = import.meta.env.VITE_CURRENT_NODE;
 
+const NODES = {
+  comondu: "100.82.181.5:3001",
+  lapaz: "100.114.40.70:3002",
+  loreto: "100.101.236.118:3003",
+  mulege: "100.83.23.115:3004",
+};
+
 //Instancia de axios
 const api = axios.create({ baseURL: API_URL });
 
@@ -21,18 +28,14 @@ export const getProducts = async () => {
 //Obtener productos de otro nodo
 export const getBranchProducts = async (branch) => {
   try {
-    const ports = {
-      comondu: 3001,
-      lapaz: 3002,
-      loreto: 3003,
-      mulege: 3004,
-    };
     const response = await axios.get(
-      `http://localhost:${ports[branch]}/api/${branch}/productos`,
+      `http://${NODES[branch]}/api/${branch}/productos`,
     );
+
     return response.data;
   } catch (error) {
     console.error(`Error obteniendo productos de ${branch}:`, error);
+
     return [];
   }
 };
@@ -138,14 +141,8 @@ export const requestProduct = async (
   motivo,
 ) => {
   try {
-    const ports = {
-      comondu: 3001,
-      lapaz: 3002,
-      loreto: 3003,
-      mulege: 3004,
-    };
     const response = await axios.post(
-      `http://localhost:${ports[sourceBranchKey]}/api/red/productos/enviar`,
+      `http://${NODES[sourceBranchKey]}/api/red/productos/enviar`,
       {
         producto_id: productoId,
         cantidad,
@@ -153,9 +150,11 @@ export const requestProduct = async (
         motivo,
       },
     );
+
     return response.data;
   } catch (error) {
     console.error(`Error solicitando producto a ${sourceBranchKey}:`, error);
+
     throw error;
   }
 };
