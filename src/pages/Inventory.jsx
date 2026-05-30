@@ -38,7 +38,7 @@ const Inventory = () => {
 
         const formattedProducts = data.map((product) => ({
           id: product.id,
-          name: product.nombre,
+          name: product.nombre ?? "Sin nombre",
           category: product.categoria?.nombre || "Sin categoría",
           quantity: product.cantidad,
           //luego esto vendrá del backend
@@ -65,7 +65,7 @@ const Inventory = () => {
     }
 
     return products.filter((product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      (product.name ?? "").toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [searchTerm, products]);
 

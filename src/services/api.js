@@ -158,3 +158,11 @@ export const requestProduct = async (
     throw error;
   }
 };
+
+//Crear categoria
+export const createCategory = async (nombre) => {
+  const response = await api.post(`/api/${CURRENT_NODE}/categorias`, {
+    nombre,
+  });
+  return response.data;
+};

@@ -68,7 +68,7 @@ const NetworkInventory = () => {
       const data = await getBranchProducts(selectedBranchData.key);
       const formattedProducts = data.map((product) => ({
         id: product.id,
-        name: product.nombre,
+        name: product.nombre ?? "Sin nombre",
         category: product.categoria?.nombre || "Sin categoría",
         quantity: product.cantidad,
         unit: product.unit,
@@ -90,7 +90,7 @@ const NetworkInventory = () => {
   const filteredProducts = useMemo(
     () =>
       branchProducts.filter((product) =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()),
+        (product.name ?? "").toLowerCase().includes(searchTerm.toLowerCase()),
       ),
     [branchProducts, searchTerm],
   );

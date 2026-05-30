@@ -5,7 +5,7 @@ import { Box, Typography } from "@mui/material";
 import { Inventory2, People, Mail, Warning } from "@mui/icons-material";
 import StatCard from "../components/dashboard/StatCard";
 import InfoPanel from "../components/dashboard/InfoPanel";
-import { getProducts,  getBeneficiarios } from "../services/api";
+import { getProducts, getBeneficiarios } from "../services/api";
 
 const Dashboard = () => {
   const [products, setProducts] = useState([]);
@@ -16,14 +16,9 @@ const Dashboard = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-           const [
-          productsData,
-          familiasData
-        ] = await Promise.all([
-
+        const [productsData, familiasData] = await Promise.all([
           getProducts(),
-          getBeneficiarios()
-
+          getBeneficiarios(),
         ]);
 
         setProducts(productsData);
@@ -48,11 +43,14 @@ const Dashboard = () => {
     },
 
     {
-    title: "Familias Registradas",
-    value: loading ? "..." : familias.length,
-    description: "beneficiarios registrados",
+      title: "Familias Registradas",
+      value: loading ? "..." : familias.length,
+      description: "beneficiarios registrados",
+      icon: <People />,
+      iconBg: "#EFF6FF",
+      iconColor: "#3b82f6",
     },
-    
+
     {
       title: "Solicitudes Recibidas",
       value: 0,
