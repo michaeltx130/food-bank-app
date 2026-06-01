@@ -62,7 +62,7 @@ const Request = () => {
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                 Recibidas
-                <Badge badgeContent={2} color="error" />
+              
               </Box>
             </Button>
 

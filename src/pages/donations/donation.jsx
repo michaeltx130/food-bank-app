@@ -94,15 +94,11 @@ useEffect(() => {
           )}
         </Box>
       </div>
-
-      <DonationForm
-  open={open}
-  setOpen={setOpen}
-  onSuccess={() => {
-    fetchDonaciones();
-    window.dispatchEvent(new CustomEvent("inventario:actualizar"));
-  }}
-/>
+          <DonationForm
+        open={open}
+        setOpen={setOpen}
+        onSuccess={fetchDonaciones}
+      />
     </div>
   );
 };
