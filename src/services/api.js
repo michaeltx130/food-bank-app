@@ -4,10 +4,10 @@ const API_URL = import.meta.env.VITE_API_URL;
 const CURRENT_NODE = import.meta.env.VITE_CURRENT_NODE;
 
 const NODES = {
-  comondu: "http://100.82.181.5:3001",
-  lapaz: "http://100.114.40.70:3002",
-  loreto: "http://100.101.236.118:3003",
-  mulege: "http://100.83.23.115:3004",
+  comondu: "100.82.181.5:3001",
+  lapaz: "100.114.40.70:3002",
+  loreto: "100.101.236.118:3003",
+  mulege: "100.83.23.115:3004",
 };
 
 const api = axios.create({
@@ -35,10 +35,9 @@ export const getBranchProducts = async (
   branch
 ) => {
   try {
-    const response =
-      await axios.get(
-        `${NODES[branch]}/api/${branch}/productos`
-      );
+    const response = await axios.get(
+      `http://${NODES[branch]}/api/${branch}/productos`
+    );
     return response.data;
   } catch (error) {
     console.error(
@@ -182,7 +181,7 @@ export const createFamilia =
   };
 
 // Solicitar producto a otra sucursal.
-// Se llama al propio servidor (api) — él sabe que es el origen y 
+// Se llama al propio servidor (api) — él sabe que es el origen y
 export const requestProduct =
   async (
     sourceBranchKey,
@@ -193,7 +192,7 @@ export const requestProduct =
     try {
       const response =
         await axios.post(
-          `${NODES[sourceBranchKey]}/api/red/productos/enviar`,
+          `http://${NODES[sourceBranchKey]}/api/red/productos/enviar`,
           {
             producto_id:
               productoId,
@@ -310,7 +309,7 @@ export const getSolicitudesRecibidas =
               try {
                 const r =
                   await axios.get(
-                    `${host}/api/${branch}/transferencias`,
+                    `http://${host}/api/${branch}/transferencias`,
                     {
                       timeout: 3000,
                     }
@@ -376,7 +375,7 @@ export const aprobarSolicitud =
     try {
       const response =
         await axios.post(
-          `${NODES[origen]}/api/${origen}/transferencias/${transferenciaId}/aprobar`
+          `http://${NODES[origen]}/api/${origen}/transferencias/${transferenciaId}/aprobar`
         );
 
       return response.data;
@@ -398,7 +397,7 @@ export const rechazarSolicitud =
     try {
       const response =
         await axios.post(
-          `${NODES[origen]}/api/${origen}/transferencias/${transferenciaId}/rechazar`
+          `http://${NODES[origen]}/api/${origen}/transferencias/${transferenciaId}/rechazar`
         );
 
       return response.data;
