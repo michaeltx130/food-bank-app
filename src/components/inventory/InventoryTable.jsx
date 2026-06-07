@@ -13,9 +13,6 @@ import InventoryRow from "./InventoryRow";
 
 const InventoryTable = ({
   products = [],
-  showRequestButton = false,
-  onRequest,
-  branchName,
 }) => {
   return (
     <TableContainer>
@@ -68,7 +65,7 @@ const InventoryTable = ({
           {products.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={showRequestButton ? 5 : 4}
+                colSpan={4}
                 align="center"
                 sx={{
                   paddingY: 6,
@@ -85,9 +82,6 @@ const InventoryTable = ({
               <InventoryRow
                 key={product.id}
                 product={product}
-                showRequestButton={showRequestButton}
-                onRequest={onRequest}
-                branchName={branchName}
               />
             ))
           )}

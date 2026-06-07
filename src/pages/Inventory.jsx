@@ -138,6 +138,8 @@ const Inventory = () => {
             justifyContent: "space-between",
             alignItems: "center",
             marginBottom: 4,
+            gap: 3,
+            flexWrap: "wrap",
           }}
         >
           <Typography
@@ -168,30 +170,50 @@ const Inventory = () => {
             Agregar Producto
           </Button>
         </Box>
-        <Paper
+        {/* Buscador */}
+        <Box
           sx={{
-            padding: 3,
-            borderRadius: "24px",
-            border: "0.5px solid #E7E5E4",
-            boxShadow: "0px 1px 2px rgba(0,0,0,0.04)",
+            marginBottom: 3,
           }}
         >
           <SearchBar
+            placeholder="Buscar productos"
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
           />
+        </Box>
+
+        {/* Tabla */}
+        <Paper
+          sx={{
+            padding: 3,
+            borderRadius: "24px",
+            border: "1px solid #E7E5E4",
+            boxShadow: "0px 1px 2px rgba(0,0,0,0.04)",
+          }}
+        >
+          <Typography
+            sx={{
+              fontWeight: 700,
+              fontSize: "24px",
+              marginBottom: 3,
+              color: "#171717",
+            }}
+          >
+            Productos Totales ({filteredProducts.length})
+          </Typography>
+
           <InventoryTable products={currentProducts} />
 
-          {/* Paginación */}
           {totalPages > 1 && (
             <Box
               sx={{
                 display: "flex",
                 justifyContent: "center",
-                marginTop: 3,
+                marginTop: 4,
               }}
             >
               <Pagination

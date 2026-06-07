@@ -1,20 +1,15 @@
 import React from "react";
 
-import { TableRow, TableCell, Box, Typography, Button } from "@mui/material";
+import {
+  TableRow,
+  TableCell,
+  Box,
+  Typography,
+} from "@mui/material";
+
 import Inventory2Icon from "@mui/icons-material/Inventory2";
-import SendIcon from "@mui/icons-material/Send";
 
-const InventoryRow = ({
-  product,
-  showRequestButton = false,
-  onRequest,
-  branchName,
-}) => {
-  const handleRequest = () => {
-    if (!onRequest) return;
-    onRequest(product, branchName);
-  };
-
+const InventoryRow = ({ product }) => {
   return (
     <TableRow
       hover
@@ -46,6 +41,7 @@ const InventoryRow = ({
           >
             <Inventory2Icon />
           </Box>
+
           <Typography
             sx={{
               fontWeight: 700,
@@ -57,9 +53,13 @@ const InventoryRow = ({
         </Box>
       </TableCell>
 
-      <TableCell>{product.id}</TableCell>
+      <TableCell>
+        {product.id}
+      </TableCell>
 
-      <TableCell>{product.category}</TableCell>
+      <TableCell>
+        {product.category}
+      </TableCell>
 
       <TableCell>
         <Box
@@ -77,6 +77,7 @@ const InventoryRow = ({
           >
             {product.quantity}
           </Typography>
+
           <Typography
             sx={{
               color: "#737373",
@@ -86,25 +87,6 @@ const InventoryRow = ({
           </Typography>
         </Box>
       </TableCell>
-      {showRequestButton && (
-        <TableCell>
-          <Button
-            variant="contained"
-            startIcon={<SendIcon />}
-            onClick={handleRequest}
-            sx={{
-              backgroundColor: "#F97316",
-              borderRadius: "12px",
-              textTransform: "none",
-              fontWeight: 700,
-              boxShadow: "none",
-              "&:hover": { backgroundColor: "#EA580C", boxShadow: "none" },
-            }}
-          >
-            Solicitar
-          </Button>
-        </TableCell>
-      )}
     </TableRow>
   );
 };
