@@ -12,6 +12,7 @@ import NetworkInventory from "./pages/NetworkInventory";
 import Request from "./pages/requests/Request";
 import Donation from "./pages/donations/donation";
 import Beneficiary from "./pages/beneficiaries/Beneficiaries";
+import History from "./pages/History";
 
 function App() {
 
@@ -49,6 +50,10 @@ function App() {
         <Route
          path="/beneficiaries"
          element={<Beneficiary />}
+        />
+        <Route
+          path="/history"
+          element={<History />}
         />
 
       </Routes>

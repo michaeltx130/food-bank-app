@@ -49,7 +49,7 @@ const Sidebar = () => {
       icon: <BeneficiaryIcon />,
       path: "/beneficiaries",
     },
-    { text: "Historial", icon: <HistoryIcon />, path: "/" },
+    { text: "Historial", icon: <HistoryIcon />, path: "/history" },
   ];
 
   return (
