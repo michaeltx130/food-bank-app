@@ -60,12 +60,10 @@ const Inventory = () => {
 
   //Productos filtrados
   const filteredProducts = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return products;
-    }
-
-    return products.filter((product) =>
-      (product.name ?? "").toLowerCase().includes(searchTerm.toLowerCase()),
+    return products.filter(
+      (product) =>
+        product.quantity > 0 &&
+        (product.name ?? "").toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [searchTerm, products]);
 

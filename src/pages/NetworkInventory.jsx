@@ -25,57 +25,33 @@ const NetworkInventory = () => {
   ];
 
   const availableBranches = useMemo(
-    () =>
-      allBranches.filter(
-        (branch) => branch.key !== CURRENT_NODE
-      ),
-    [CURRENT_NODE]
+    () => allBranches.filter((branch) => branch.key !== CURRENT_NODE),
+    [CURRENT_NODE],
   );
 
-  const [selectedBranchId, setSelectedBranchId] =
-    useState("");
+  const [selectedBranchId, setSelectedBranchId] = useState("");
 
-  const [branchProducts, setBranchProducts] =
-    useState([]);
+  const [branchProducts, setBranchProducts] = useState([]);
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const [searchTerm, setSearchTerm] =
-    useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const [page, setPage] =
-    useState(1);
+  const [page, setPage] = useState(1);
 
   const productsPerPage = 5;
 
   useEffect(() => {
-    if (
-      availableBranches.length > 0 &&
-      !selectedBranchId
-    ) {
-      setSelectedBranchId(
-        availableBranches[0].id
-      );
+    if (availableBranches.length > 0 && !selectedBranchId) {
+      setSelectedBranchId(availableBranches[0].id);
     }
-  }, [
-    availableBranches,
-    selectedBranchId,
-  ]);
+  }, [availableBranches, selectedBranchId]);
 
   const selectedBranchData = useMemo(
-    () =>
-      availableBranches.find(
-        (branch) =>
-          branch.id === selectedBranchId
-      ),
-    [
-      selectedBranchId,
-      availableBranches,
-    ]
+    () => availableBranches.find((branch) => branch.id === selectedBranchId),
+    [selectedBranchId, availableBranches],
   );
 
   const fetchProducts = async () => {
@@ -85,33 +61,20 @@ const NetworkInventory = () => {
       setLoading(true);
       setError("");
 
-      const data =
-        await getBranchProducts(
-          selectedBranchData.key
-        );
+      const data = await getBranchProducts(selectedBranchData.key);
 
-      const formattedProducts =
-        data.map((product) => ({
-          id: product.id,
-          name:
-            product.nombre ??
-            "Sin nombre",
-          category:
-            product.categoria?.nombre ||
-            "Sin categoría",
-          quantity:
-            product.cantidad,
-          unit: product.unit,
-        }));
+      const formattedProducts = data.map((product) => ({
+        id: product.id,
+        name: product.nombre ?? "Sin nombre",
+        category: product.categoria?.nombre || "Sin categoría",
+        quantity: product.cantidad,
+        unit: product.unit,
+      }));
 
-      setBranchProducts(
-        formattedProducts
-      );
+      setBranchProducts(formattedProducts);
     } catch (err) {
       console.error(err);
-      setError(
-        "Error cargando productos"
-      );
+      setError("Error cargando productos");
     } finally {
       setLoading(false);
     }
@@ -125,44 +88,22 @@ const NetworkInventory = () => {
     () =>
       branchProducts.filter(
         (product) =>
-          (
-            product.name ?? ""
-          )
-            .toLowerCase()
-            .includes(
-              searchTerm.toLowerCase()
-            )
+          product.quantity > 0 &&
+          (product.name ?? "").toLowerCase().includes(searchTerm.toLowerCase()),
       ),
-    [branchProducts, searchTerm]
+    [branchProducts, searchTerm],
   );
 
-  const paginatedProducts =
-    useMemo(() => {
-      const start =
-        (page - 1) *
-        productsPerPage;
+  const paginatedProducts = useMemo(() => {
+    const start = (page - 1) * productsPerPage;
 
-      return filteredProducts.slice(
-        start,
-        start + productsPerPage
-      );
-    }, [
-      filteredProducts,
-      page,
-    ]);
+    return filteredProducts.slice(start, start + productsPerPage);
+  }, [filteredProducts, page]);
 
-  const totalPages =
-    Math.ceil(
-      filteredProducts.length /
-        productsPerPage
-    );
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
-  const handleBranchChange = (
-    event
-  ) => {
-    setSelectedBranchId(
-      event.target.value
-    );
+  const handleBranchChange = (event) => {
+    setSelectedBranchId(event.target.value);
 
     setPage(1);
     setSearchTerm("");
@@ -181,8 +122,7 @@ const NetworkInventory = () => {
         sx={{
           flexGrow: 1,
           padding: 4,
-          backgroundColor:
-            "#F9FAFB",
+          backgroundColor: "#F9FAFB",
           overflowY: "auto",
         }}
       >
@@ -190,8 +130,7 @@ const NetworkInventory = () => {
         <Box
           sx={{
             display: "flex",
-            justifyContent:
-              "space-between",
+            justifyContent: "space-between",
             alignItems: "center",
             marginBottom: 4,
             gap: 3,
@@ -209,15 +148,9 @@ const NetworkInventory = () => {
           </Typography>
 
           <BranchSelector
-            branches={
-              availableBranches
-            }
-            selectedBranch={
-              selectedBranchId
-            }
-            onChange={
-              handleBranchChange
-            }
+            branches={availableBranches}
+            selectedBranch={selectedBranchId}
+            onChange={handleBranchChange}
           />
         </Box>
 
@@ -231,9 +164,7 @@ const NetworkInventory = () => {
             placeholder="Buscar productos"
             value={searchTerm}
             onChange={(e) => {
-              setSearchTerm(
-                e.target.value
-              );
+              setSearchTerm(e.target.value);
               setPage(1);
             }}
           />
@@ -244,10 +175,8 @@ const NetworkInventory = () => {
           sx={{
             padding: 3,
             borderRadius: "24px",
-            border:
-              "1px solid #E7E5E4",
-            boxShadow:
-              "0px 1px 2px rgba(0,0,0,0.04)",
+            border: "1px solid #E7E5E4",
+            boxShadow: "0px 1px 2px rgba(0,0,0,0.04)",
           }}
         >
           <Typography
@@ -258,19 +187,14 @@ const NetworkInventory = () => {
               color: "#171717",
             }}
           >
-            Productos Totales (
-            {
-              filteredProducts.length
-            }
-            )
+            Productos Totales ({filteredProducts.length})
           </Typography>
 
           {loading ? (
             <Box
               sx={{
                 display: "flex",
-                justifyContent:
-                  "center",
+                justifyContent: "center",
                 paddingY: 8,
               }}
             >
@@ -280,48 +204,30 @@ const NetworkInventory = () => {
             <Box
               sx={{
                 paddingY: 8,
-                textAlign:
-                  "center",
+                textAlign: "center",
               }}
             >
-              <Typography color="error">
-                {error}
-              </Typography>
+              <Typography color="error">{error}</Typography>
             </Box>
           ) : (
             <>
               <InventoryTable
-                products={
-                  paginatedProducts
-                }
-                branchName={
-                  selectedBranchData?.branchName
-                }
+                products={paginatedProducts}
+                branchName={selectedBranchData?.branchName}
               />
 
               {totalPages > 1 && (
                 <Box
                   sx={{
-                    display:
-                      "flex",
-                    justifyContent:
-                      "center",
+                    display: "flex",
+                    justifyContent: "center",
                     marginTop: 4,
                   }}
                 >
                   <Pagination
-                    count={
-                      totalPages
-                    }
+                    count={totalPages}
                     page={page}
-                    onChange={(
-                      _,
-                      value
-                    ) =>
-                      setPage(
-                        value
-                      )
-                    }
+                    onChange={(_, value) => setPage(value)}
                     color="primary"
                   />
                 </Box>
