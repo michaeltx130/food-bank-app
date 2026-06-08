@@ -1,7 +1,22 @@
 import { useEffect, useState } from "react";
 import RequestCard from "../../components/requests/RequestCard";
-import { Box, Typography, Pagination, Skeleton, Card, CardContent, Dialog, DialogContent, TextField, Button } from "@mui/material";
-import { getSolicitudesRecibidas, aprobarSolicitud, rechazarSolicitud } from "../../services/api";
+import {
+  Box,
+  Typography,
+  Pagination,
+  Skeleton,
+  Card,
+  CardContent,
+  Dialog,
+  DialogContent,
+  TextField,
+  Button,
+} from "@mui/material";
+import {
+  getSolicitudesRecibidas,
+  aprobarSolicitud,
+  rechazarSolicitud,
+} from "../../services/api";
 
 const Received = () => {
   const [solicitudes, setSolicitudes] = useState([]);
@@ -13,22 +28,22 @@ const Received = () => {
 
   const itemsPerPage = 5;
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (showLoader = true) => {
+    if (showLoader) setLoading(true);
+
     try {
       const data = await getSolicitudesRecibidas();
       setSolicitudes(data);
     } catch (error) {
-      console.error("Error obteniendo solicitudes:", error);
+      console.error(error);
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
   }, []);
-
   const handleAprobar = async (id, origen) => {
     try {
       await aprobarSolicitud(id, origen);
@@ -49,7 +64,7 @@ const Received = () => {
       await rechazarSolicitud(
         solicitudSeleccionada.transferencia_id,
         solicitudSeleccionada.origen,
-        motivo
+        motivo,
       );
       setOpenReject(false);
       setSolicitudSeleccionada(null);
@@ -61,7 +76,10 @@ const Received = () => {
   };
 
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentSolicitudes = solicitudes.slice(startIndex, startIndex + itemsPerPage);
+  const currentSolicitudes = solicitudes.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
   const totalPages = Math.ceil(solicitudes.length / itemsPerPage);
 
   if (loading) {
@@ -75,7 +93,13 @@ const Received = () => {
                 <Box sx={{ mt: 2 }}>
                   <Skeleton width="70%" height={45} />
                 </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mt: 3,
+                  }}
+                >
                   <Skeleton width={120} height={25} />
                   <Skeleton width={180} height={40} />
                 </Box>
@@ -85,7 +109,7 @@ const Received = () => {
         </Box>
       </Box>
     );
-  } // ← este cierre faltaba
+  }
 
   return (
     <>
@@ -96,15 +120,17 @@ const Received = () => {
           </Typography>
         ) : (
           <>
-            {currentSolicitudes.map((s) => (
-              <RequestCard
-                key={s.transferencia_id}
-                solicitud={s}
-                type="received"
-                onAprobar={() => handleAprobar(s.transferencia_id, s.origen)}
-                onRechazar={() => handleRechazar(s)}
-              />
-            ))}
+            {currentSolicitudes.map((s) => {
+              return (
+                <RequestCard
+                  key={s.transferencia_id || s.id}
+                  solicitud={s}
+                  type="received"
+                  onAprobar={() => handleAprobar(s.transferencia_id, s.origen)}
+                  onRechazar={() => handleRechazar(s)}
+                />
+              );
+            })}
             {totalPages > 1 && (
               <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
                 <Pagination
@@ -142,7 +168,11 @@ const Received = () => {
             placeholder="Ejemplo: No hay stock suficiente"
           />
           <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
-            <Button fullWidth variant="outlined" onClick={() => setOpenReject(false)}>
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={() => setOpenReject(false)}
+            >
               Cancelar
             </Button>
             <Button

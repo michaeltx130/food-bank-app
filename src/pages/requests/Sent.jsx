@@ -31,48 +31,73 @@ const Sent = ({ open, setOpen }) => {
   const [cantidad, setCantidad] = useState("");
   const [enviando, setEnviando] = useState(false);
 
-  const fetchSolicitudes = async () => {
-    setLoading(true);
+  const fetchSolicitudes = async (showLoader = true) => {
+  if (showLoader) setLoading(true);
+
+  try {
     const data = await getSolicitudesEnviadas();
     setSolicitudes(data);
-    setCurrentPage(1);
-    setLoading(false);
-  };
+  } finally {
+    if (showLoader) setLoading(false);
+  }
+};
 
-  useEffect(() => {
-    fetchSolicitudes();
-  }, []);
-
+ useEffect(() => {
+  fetchSolicitudes();
+}, []);
   const handleSucursalChange = async (e) => {
-    const valor = e.target.value;
-    setSucursal(valor);
-    setProductoId("");
-    setLoadingProductos(true);
+  const valor = e.target.value;
+
+  setSucursal(valor);
+  setProductoId("");
+
+  setLoadingProductos(true);
+
+  try {
     const data = await getBranchProducts(valor);
+
     setProductosSucursal(data.productos || data);
+  } catch (error) {
+    console.error(error);
+    setProductosSucursal([]);
+  } finally {
     setLoadingProductos(false);
-  };
+  }
+};
 
   const handleEnviar = async () => {
-    if (!sucursal || !productoId || !cantidad) return;
-    setEnviando(true);
-    try {
-      await createSolicitud({
-        producto_id: Number(productoId),
-        cantidad: Number(cantidad),
-        destino: sucursal,
-      });
-      setOpen(false);
-      setSucursal("");
-      setProductoId("");
-      setCantidad("");
-      fetchSolicitudes();
-    } catch (e) {
-      console.error("Error enviando solicitud:", e);
-    } finally {
-      setEnviando(false);
+  if (!sucursal || !productoId || !cantidad) return;
+
+  setEnviando(true);
+
+  try {
+    const productoElegido = productosSucursal.find(
+      (p) => p.id === Number(productoId)
+    );
+
+    if (!productoElegido) {
+      alert("Producto no encontrado");
+      return;
     }
-  };
+
+    await createSolicitud({
+      origen: sucursal,
+      producto_nombre: productoElegido.nombre,
+      cantidad: Number(cantidad),
+    });
+
+    setOpen(false);
+    setSucursal("");
+    setProductoId("");
+    setCantidad("");
+
+    fetchSolicitudes();
+  } catch (e) {
+    console.error("Error enviando solicitud:", e);
+  } finally {
+    setEnviando(false);
+  }
+};
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentSolicitudes = solicitudes.slice(startIndex, startIndex + itemsPerPage);

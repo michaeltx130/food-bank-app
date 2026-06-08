@@ -24,7 +24,6 @@ function RequestCard({
   } = solicitud;
 
   const esEnviada = type === "sent";
-  const sucursal = esEnviada ? destino : origen;
   const estadoActual = aprobacion || estado;
 
   const estadoColor = {
@@ -54,8 +53,8 @@ function RequestCard({
             <ApartmentOutlinedIcon sx={{ color: "#6b7280", fontSize: 18 }} />
             <Typography variant="subtitle2" color="text.secondary">
               {esEnviada
-                ? `Solicitud enviada a: ${sucursal}`
-                : `Solicitud de: ${sucursal}`}
+                ? `Solicitud enviada a: ${origen}`
+                : `Solicitud de: ${destino}`}
             </Typography>
           </Box>
 

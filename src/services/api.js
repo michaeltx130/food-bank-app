@@ -171,17 +171,17 @@ export const createCategory = async (nombre) => {
 
 // Crear solicitud / transferencia
 export const createSolicitud = async ({
-  producto_id,
+  origen,
+  producto_nombre,
   cantidad,
-  destino,
 }) => {
   try {
     const response = await api.post(
-      "/api/red/productos/enviar",
+      "/api/red/productos/solicitar",
       {
-        producto_id,
+        origen,
+        producto_nombre,
         cantidad,
-        destino,
       }
     );
 
@@ -195,19 +195,40 @@ export const createSolicitud = async ({
 // Obtener solicitudes enviadas
 export const getSolicitudesEnviadas = async () => {
   try {
-    const response = await api.get(`/api/${CURRENT_NODE}/transferencias`);
+    const respuestas = await Promise.all(
+      Object.entries(NODES).map(async ([branch, host]) => {
+        try {
+          const r = await axios.get(
+            `http://${host}/api/${branch}/transferencias`,
+            {
+              timeout: 3000,
+            }
+          );
 
-    const todas = response.data || [];
+          return r.data || [];
+        } catch {
+          console.log(`${branch} no disponible`);
+          return [];
+        }
+      })
+    );
 
-    return todas
-      .filter((t) => t.origen?.toLowerCase() === CURRENT_NODE.toLowerCase())
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const todas = respuestas.flat();
+
+    const enviadas = todas.filter(
+      (t) => t.destino?.toLowerCase() === CURRENT_NODE.toLowerCase()
+    );
+
+    return [
+      ...new Map(
+        enviadas.map((t) => [t.transferencia_id || t.id, t])
+      ).values(),
+    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   } catch (error) {
     console.error("Error obteniendo solicitudes enviadas:", error);
     return [];
   }
 };
-
 // Obtener solicitudes recibidas
 export const getSolicitudesRecibidas = async () => {
   try {
@@ -218,7 +239,7 @@ export const getSolicitudesRecibidas = async () => {
             `http://${host}/api/${branch}/transferencias`,
             {
               timeout: 3000,
-            },
+            }
           );
 
           return r.data || [];
@@ -226,18 +247,18 @@ export const getSolicitudesRecibidas = async () => {
           console.log(`${branch} no disponible`);
           return [];
         }
-      }),
+      })
     );
 
     const todas = respuestas.flat();
 
     const recibidas = todas.filter(
-      (t) => t.destino?.toLowerCase() === CURRENT_NODE.toLowerCase(),
+      (t) => t.origen?.toLowerCase() === CURRENT_NODE.toLowerCase()
     );
 
     return [
       ...new Map(
-        recibidas.map((t) => [t.transferencia_id || t.id, t]),
+        recibidas.map((t) => [t.transferencia_id || t.id, t])
       ).values(),
     ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   } catch (error) {
@@ -261,10 +282,17 @@ export const aprobarSolicitud = async (transferenciaId, origen) => {
 };
 
 // Rechazar solicitud
-export const rechazarSolicitud = async (transferenciaId, origen) => {
+export const rechazarSolicitud = async (
+  transferenciaId,
+  origen,
+  motivo
+) => {
   try {
     const response = await axios.post(
       `http://${NODES[origen]}/api/${origen}/transferencias/${transferenciaId}/rechazar`,
+      {
+        motivo,
+      }
     );
 
     return response.data;
