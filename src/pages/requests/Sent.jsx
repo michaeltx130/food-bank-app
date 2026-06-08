@@ -9,11 +9,12 @@ import {
   TextField,
   MenuItem,
   CircularProgress,
+  Pagination,
 } from "@mui/material";
 
 import {
   getSolicitudesEnviadas,
-  getBranchProducts,
+  getProducts,
   createSolicitud,
 } from "../../services/api";
 
@@ -32,6 +33,8 @@ const Sent = ({ open, setOpen }) => {
 
   const [productosSucursal, setProductosSucursal] = useState([]);
   const [loadingProductos, setLoadingProductos] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const [sucursal, setSucursal] = useState("");
   const [productoId, setProductoId] = useState("");
@@ -42,6 +45,7 @@ const Sent = ({ open, setOpen }) => {
     setLoading(true);
     const data = await getSolicitudesEnviadas();
     setSolicitudes(data);
+    setCurrentPage(1);
     setLoading(false);
   };
 
@@ -50,18 +54,18 @@ const Sent = ({ open, setOpen }) => {
   }, []);
 
   const handleSucursalChange = async (e) => {
-    const valor = e.target.value;
+  const valor = e.target.value;
 
-    setSucursal(valor);
-    setProductoId("");
+  setSucursal(valor);
+  setProductoId("");
 
-    setLoadingProductos(true);
+  setLoadingProductos(true);
 
-    const data = await getBranchProducts(valor);
+  const data = await getProducts();
 
-    setProductosSucursal(data.productos || data);
-    setLoadingProductos(false);
-  };
+  setProductosSucursal(data);
+  setLoadingProductos(false);
+};
 
   const handleEnviar = async () => {
     if (!sucursal || !productoId || !cantidad) return;
@@ -70,13 +74,12 @@ const Sent = ({ open, setOpen }) => {
 
     try {
       const productoElegido = productosSucursal.find(
-        (p) => p.id === Number(productoId)
+        (p) => p.id === Number(productoId),
       );
 
       await createSolicitud({
-        producto_nombre: productoElegido?.nombre,
+        producto_id: Number(productoId),
         cantidad: Number(cantidad),
-        origen: CURRENT_NODE,
         destino: sucursal,
       });
 
@@ -92,6 +95,15 @@ const Sent = ({ open, setOpen }) => {
       setEnviando(false);
     }
   };
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+
+  const currentSolicitudes = solicitudes.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
+
+  const totalPages = Math.ceil(solicitudes.length / itemsPerPage);
 
   return (
     <>
@@ -110,14 +122,33 @@ const Sent = ({ open, setOpen }) => {
             No hay solicitudes enviadas.
           </Typography>
         ) : (
-          solicitudes.map((s) => (
-            <RequestCard
-              key={s.id}
-              solicitud={s}
-              type="sent"
-              showActions={false}
-            />
-          ))
+          <>
+            {currentSolicitudes.map((s) => (
+              <RequestCard
+                key={s.transferencia_id || s.id}
+                solicitud={s}
+                type="sent"
+                showActions={false}
+              />
+            ))}
+
+            {totalPages > 1 && (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  mt: 4,
+                }}
+              >
+                <Pagination
+                  count={totalPages}
+                  page={currentPage}
+                  onChange={(event, value) => setCurrentPage(value)}
+                  color="primary"
+                />
+              </Box>
+            )}
+          </>
         )}
       </Box>
 
@@ -150,20 +181,11 @@ const Sent = ({ open, setOpen }) => {
             value={sucursal}
             onChange={handleSucursalChange}
           >
-           {SUCURSALES
-  .filter(
-    (s) =>
-      s.key !==
-      CURRENT_NODE
-  )
-  .map((s) => (
-    <MenuItem
-      key={s.key}
-      value={s.key}
-    >
-      {s.label}
-    </MenuItem>
-  ))}
+            {SUCURSALES.filter((s) => s.key !== CURRENT_NODE).map((s) => (
+              <MenuItem key={s.key} value={s.key}>
+                {s.label}
+              </MenuItem>
+            ))}
           </TextField>
 
           <Box sx={{ display: "flex", gap: 2, marginBottom: 3 }}>
@@ -224,9 +246,7 @@ const Sent = ({ open, setOpen }) => {
               variant="contained"
               color="warning"
               onClick={handleEnviar}
-              disabled={
-                enviando || !sucursal || !productoId || !cantidad
-              }
+              disabled={enviando || !sucursal || !productoId || !cantidad}
               sx={{
                 borderRadius: 3,
                 textTransform: "none",

@@ -1,27 +1,38 @@
 import { useState, useEffect } from "react";
-import {Dialog, DialogContent, Typography, Box,TextField, Button, MenuItem, Alert,} from "@mui/material";
+import {
+  Dialog,
+  DialogContent,
+  Typography,
+  Box,
+  TextField,
+  Button,
+  MenuItem,
+  Alert,
+} from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { getCategories, createDonacion } from "../../services/api";
 
 const DonationForm = ({ open, setOpen, onSuccess }) => {
   const [categorias, setCategorias] = useState([]);
-  const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState(null);
-  const [success, setSuccess]       = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
 
   const [form, setForm] = useState({
-    donante_nombre:  "",
+    donante_nombre: "",
     producto_nombre: "",
-    categoria_id:    "",
-    cantidad:        "",
-    unit:            "",
+    categoria_id: "",
+    cantidad: "",
+    unit: "",
   });
 
   useEffect(() => {
     if (!open) return;
     setError(null);
     setSuccess(false);
-    getCategories().then(setCategorias).catch(() => setError("Error al cargar categorías."));
+    getCategories()
+      .then(setCategorias)
+      .catch(() => setError("Error al cargar categorías."));
   }, [open]);
 
   const handleChange = (e) =>
@@ -32,25 +43,51 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
     setOpen(false);
     setError(null);
     setSuccess(false);
-    setForm({ donante_nombre: "", producto_nombre: "", categoria_id: "", cantidad: "", unit: "" });
+    setForm({
+      donante_nombre: "",
+      producto_nombre: "",
+      categoria_id: "",
+      cantidad: "",
+      unit: "",
+    });
   };
 
   const handleSubmit = async () => {
     if (loading) return;
-    if (!form.donante_nombre.trim())  return setError("El nombre del donante es requerido.");
-    if (!form.producto_nombre.trim()) return setError("El nombre del producto es requerido.");
-    if (Number(form.cantidad) <= 0)   return setError("La cantidad debe ser mayor a 0.");
-    if (!form.unit)                   return setError("Selecciona una unidad.");
+
+    if (!form.donante_nombre.trim()) {
+      return setError("El nombre del donante es requerido.");
+    }
+
+    if (!form.producto_nombre.trim()) {
+      return setError("El nombre del producto es requerido.");
+    }
+
+    if (!form.cantidad) {
+      return setError("La cantidad es obligatoria.");
+    }
+
+    if (Number(form.cantidad) <= 0) {
+      return setError("La cantidad debe ser mayor a 0.");
+    }
+
+    if (!Number.isInteger(Number(form.cantidad))) {
+      return setError("La cantidad debe ser un número entero.");
+    }
+
+    if (!form.unit) {
+      return setError("Selecciona una unidad.");
+    }
 
     setLoading(true);
     setError(null);
 
     try {
       await createDonacion({
-        donante:      form.donante_nombre.trim(),
-        producto:     form.producto_nombre.trim(),
-        cantidad:     Number(form.cantidad),
-        unit:         form.unit,
+        donante: form.donante_nombre.trim(),
+        producto: form.producto_nombre.trim(),
+        cantidad: Number(form.cantidad),
+        unit: form.unit,
         categoria_id: form.categoria_id ? Number(form.categoria_id) : null,
       });
 
@@ -67,18 +104,29 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
   return (
     <Dialog
       open={open}
-      onClose={handleClose}
+      onClose={loading ? undefined : handleClose}
       maxWidth="sm"
       fullWidth
       PaperProps={{ sx: { borderRadius: "32px", padding: 2 } }}
     >
       <DialogContent>
-        <Typography variant="h4" sx={{ fontWeight: "bold", color: "#171717", marginBottom: 4 }}>
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: "bold", color: "#171717", marginBottom: 4 }}
+        >
           Registrar Donación
         </Typography>
 
-        {error   && <Alert severity="error"   sx={{ mb: 3 }}>{error}</Alert>}
-        {success && <Alert severity="success" sx={{ mb: 3 }}>¡Donación registrada!</Alert>}
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+        {success && (
+          <Alert severity="success" sx={{ mb: 3 }}>
+            ¡Donación registrada!
+          </Alert>
+        )}
 
         <TextField
           fullWidth
@@ -101,7 +149,8 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
         />
 
         <TextField
-          fullWidth select
+          fullWidth
+          select
           label="Categoría"
           name="categoria_id"
           value={form.categoria_id}
@@ -116,7 +165,14 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
           ))}
         </TextField>
 
-        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, marginBottom: 4 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 2,
+            marginBottom: 4,
+          }}
+        >
           <TextField
             fullWidth
             label="Cantidad"
@@ -127,7 +183,8 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
             inputProps={{ min: 0 }}
           />
           <TextField
-            fullWidth select
+            fullWidth
+            select
             label="Unidad"
             name="unit"
             value={form.unit}
@@ -143,19 +200,23 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
 
         <Box sx={{ display: "flex", gap: 2 }}>
           <Button
-            fullWidth variant="outlined"
+            fullWidth
+            variant="outlined"
             onClick={handleClose}
             sx={{ borderRadius: "16px", paddingY: 1.5, textTransform: "none" }}
           >
             Cancelar
           </Button>
           <LoadingButton
-            fullWidth variant="contained"
+            fullWidth
+            variant="contained"
             loading={loading}
             disabled={loading}
             onClick={handleSubmit}
             sx={{
-              borderRadius: "16px", paddingY: 1.5, textTransform: "none",
+              borderRadius: "16px",
+              paddingY: 1.5,
+              textTransform: "none",
               backgroundColor: "#F97316",
               "&:hover": { backgroundColor: "#EA580C" },
             }}

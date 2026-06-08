@@ -5,24 +5,32 @@ import { Box, Typography } from "@mui/material";
 import { Inventory2, People, Mail, Warning } from "@mui/icons-material";
 import StatCard from "../components/dashboard/StatCard";
 import InfoPanel from "../components/dashboard/InfoPanel";
-import { getProducts, getBeneficiarios } from "../services/api";
+import { getProducts, getBeneficiarios,getSolicitudesRecibidas } from "../services/api";
 
 const Dashboard = () => {
   const [products, setProducts] = useState([]);
   const [familias, setFamilias] = useState([]);
+  const [solicitudes,setSolicitudes] =useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const [productsData, familiasData] = await Promise.all([
-          getProducts(),
-          getBeneficiarios(),
-        ]);
+        const [
+  productsData,
+  familiasData,
+  solicitudesData,
+] =
+  await Promise.all([
+    getProducts(),
+    getBeneficiarios(),
+    // getSolicitudesRecibidas(),
+  ]);
 
         setProducts(productsData);
         setFamilias(familiasData);
+        // setSolicitudes(solicitudesData);
       } catch (error) {
         console.error(error);
       } finally {
@@ -32,6 +40,18 @@ const Dashboard = () => {
     fetchProducts();
   }, []);
 
+  const stockBajo =
+  products.filter(
+    (p) =>
+      p.cantidad <= 5
+  );
+
+const solicitudesPendientes =
+  solicitudes.filter(
+    (s) =>
+      s.estado ===
+      "PENDIENTE"
+  );
   const stats = [
     {
       title: "Productos en Stock",
@@ -53,7 +73,10 @@ const Dashboard = () => {
 
     {
       title: "Solicitudes Recibidas",
-      value: 0,
+      value:
+  loading
+    ? "..."
+    : solicitudesPendientes.length,
       description: "pendientes de respuesta",
       icon: <Mail />,
       iconBg: "#FFF7ED",
@@ -62,7 +85,10 @@ const Dashboard = () => {
 
     {
       title: "Stock Bajo",
-      value: 0,
+      value:
+  loading
+    ? "..."
+    : stockBajo.length,
       description: "productos por reabastecer",
       icon: <Warning />,
       iconBg: "#FEF2F2",
@@ -134,19 +160,164 @@ const Dashboard = () => {
           }}
         >
           {/*Paneles de Stock Bajo y Solicitudes por responder*/}
-          <InfoPanel
-            title="Productos con Stock Bajo"
-            icon={<Warning sx={{ color: "#E11D48" }} />}
+      <InfoPanel
+  title={`Productos con Stock Bajo (${stockBajo.length})`}
+  icon={
+    <Warning
+      sx={{
+        color: "#E11D48",
+      }}
+    />
+  }
+>
+  {stockBajo.length === 0 ? (
+    <Typography
+      color="text.secondary"
+    >
+      No hay productos
+      con stock bajo.
+    </Typography>
+  ) : (
+    <>
+      {stockBajo
+        .slice(0, 5)
+        .map((p) => (
+          <Box
+            key={p.id}
+            sx={{
+              display: "flex",
+              justifyContent:
+                "space-between",
+              alignItems:
+                "center",
+              py: 1,
+              borderBottom:
+                "1px solid #f3f4f6",
+            }}
           >
-            <Typography>Información dinamicamente</Typography>
-          </InfoPanel>
+            <Typography>
+              {p.nombre}
+            </Typography>
 
-          <InfoPanel
-            title="Solicitudes por Responder"
-            icon={<Mail sx={{ color: "#EA580C" }} />}
+            <Typography
+              sx={{
+                fontWeight: 700,
+                color:
+                  p.cantidad === 0
+                    ? "#dc2626"
+                    : p.cantidad <= 2
+                    ? "#f97316"
+                    : "#eab308",
+              }}
+            >
+              {p.cantidad}
+            </Typography>
+          </Box>
+        ))}
+
+      {stockBajo.length >
+        5 && (
+        <Typography
+          sx={{
+            mt: 1.5,
+            color:
+              "text.secondary",
+            fontSize:
+              "14px",
+            fontStyle:
+              "italic",
+          }}
+        >
+          {stockBajo.length -
+            5}{" "}
+          productos más
+        </Typography>
+      )}
+    </>
+  )}
+</InfoPanel>
+
+<InfoPanel
+  title={`Solicitudes por Responder (${solicitudesPendientes.length})`}
+  icon={
+    <Mail
+      sx={{
+        color: "#EA580C",
+      }}
+    />
+  }
+>
+  {solicitudesPendientes.length ===
+  0 ? (
+    <Typography
+      color="text.secondary"
+    >
+      no sirve aun 
+    </Typography>
+  ) : (
+    <>
+      {solicitudesPendientes
+        .slice(0, 5)
+        .map((s) => (
+          <Box
+            key={s.id}
+            sx={{
+              display: "flex",
+              justifyContent:
+                "space-between",
+              alignItems:
+                "center",
+              py: 1,
+              borderBottom:
+                "1px solid #f3f4f6",
+            }}
           >
-            <Typography>Información dinamicamente</Typography>
-          </InfoPanel>
+            <Typography>
+              {s.producto_nombre}
+            </Typography>
+
+            <Box
+              sx={{
+                backgroundColor:
+                  "#f3f4f6",
+                px: 1.2,
+                py: 0.3,
+                borderRadius: 2,
+                fontSize:
+                  "12px",
+                color:
+                  "#6b7280",
+                fontWeight: 600,
+                textTransform:
+                  "capitalize",
+              }}
+            >
+              {s.origen}
+            </Box>
+          </Box>
+        ))}
+
+      {solicitudesPendientes.length >
+        5 && (
+        <Typography
+          sx={{
+            mt: 1.5,
+            color:
+              "text.secondary",
+            fontSize:
+              "14px",
+            fontStyle:
+              "italic",
+          }}
+        >
+          {solicitudesPendientes.length -
+            5}{" "}
+          solicitudes más
+        </Typography>
+      )}
+    </>
+  )}
+</InfoPanel>
         </Box>
       </Box>
     </Box>

@@ -3,7 +3,7 @@ import Sidebar from "../../components/layout/Sidebar";
 import BeneficiaryStatCard from "../../components/beneficiaries/BeneficiaryStatCard";
 import BeneficiaryCard from "../../components/beneficiaries/BeneficiaryCard";
 import BeneficiaryForm from "../../components/beneficiaries/BeneficiaryForm";
-import { Box, Button, Typography, CircularProgress } from "@mui/material";
+import { Box, Button, Typography, CircularProgress,Pagination} from "@mui/material";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import DeliveryForm from "../../components/beneficiaries/DeliveryForm";
@@ -15,23 +15,39 @@ const Beneficiaries = () => {
   const [loading, setLoading] = useState(true);
   const [deliveryOpen, setDeliveryOpen] = useState(false);
   const [familiaSeleccionada, setFamiliaSeleccionada] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const fetchBeneficiarios = async () => {
-  const data = await getBeneficiarios();
-  const mapped = data.map((b) => ({
-    ...b,
-    name: b.nombre,
-    members: b.familia?.cantidad_miembros ?? 0,
-    deliveries: b.entregas?.length ?? 0,
-    history: b.entregas?.map((e) => ({
-      date: new Date(e.fecha).toLocaleDateString("es-MX"),
-      items: [`${e.cantidad} ${e.producto?.nombre ?? "producto"}`],
-    })) ?? [],
-  }));
-  setFamilias(mapped);
-  setLoading(false);
-};
+  try {
+    setLoading(true);
 
+    const data = await getBeneficiarios();
+
+    const mapped = data.map((b) => ({
+      ...b,
+      name: b.nombre,
+      members: b.familia?.cantidad_miembros ?? 0,
+      deliveries: b.entregas?.length ?? 0,
+      history:
+        b.entregas?.map((e) => ({
+          date: new Date(e.fecha).toLocaleDateString("es-MX"),
+          items: [
+            `${e.cantidad} ${
+              e.producto?.nombre ?? "producto"
+            }`,
+          ],
+        })) ?? [],
+    }));
+
+    setFamilias(mapped);
+    setCurrentPage(1);
+  } catch (error) {
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+};
 useEffect(() => {
   fetchBeneficiarios();
 }, []);
@@ -41,6 +57,24 @@ useEffect(() => {
     setFamiliaSeleccionada(family);
     setDeliveryOpen(true);
   };
+
+
+const startIndex =
+  (currentPage - 1) *
+  itemsPerPage;
+
+const currentFamilias =
+  familias.slice(
+    startIndex,
+    startIndex +
+      itemsPerPage
+  );
+
+const totalPages =
+  Math.ceil(
+    familias.length /
+      itemsPerPage
+  );
 
   return (
      <div style={{ display: "flex", backgroundColor: "#f3f4f6", minHeight: "100vh" }}>
@@ -91,20 +125,62 @@ useEffect(() => {
         </Box>
 
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", marginTop: 4 }}>
-            <CircularProgress color="warning" />
-          </Box>
-        ) : (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {familias.map((family) => (
-              <BeneficiaryCard
-                key={family.id}
-                family={family}
-                onNuevaEntrega={handleNuevaEntrega}
-              />
-            ))}
-          </Box>
-        )}
+  <Box
+    sx={{
+      display: "flex",
+      justifyContent: "center",
+      marginTop: 4,
+    }}
+  >
+    <CircularProgress color="warning" />
+  </Box>
+) : (
+  <>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+      }}
+    >
+      {currentFamilias.map(
+        (family) => (
+          <BeneficiaryCard
+            key={family.id}
+            family={family}
+            onNuevaEntrega={
+              handleNuevaEntrega
+            }
+          />
+        )
+      )}
+    </Box>
+
+    {totalPages > 1 && (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          mt: 4,
+        }}
+      >
+        <Pagination
+          count={totalPages}
+          page={currentPage}
+          onChange={(
+            event,
+            value
+          ) =>
+            setCurrentPage(
+              value
+            )
+          }
+          color="primary"
+        />
+      </Box>
+    )}
+  </>
+)}
       </div>
 
      <BeneficiaryForm open={open} setOpen={setOpen} onSuccess={fetchBeneficiarios} />

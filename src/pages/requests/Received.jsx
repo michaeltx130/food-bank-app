@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react";
 import RequestCard from "../../components/requests/RequestCard";
-import {
-  Box,
-  Typography,
-  CircularProgress,
-} from "@mui/material";
+import { Box, Typography, CircularProgress, Pagination } from "@mui/material";
 
 import {
   getSolicitudesRecibidas,
@@ -14,19 +10,18 @@ import {
 
 const Received = () => {
   const [solicitudes, setSolicitudes] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
+
+  const itemsPerPage = 5;
 
   const fetchData = async () => {
     setLoading(true);
-
     try {
       const data = await getSolicitudesRecibidas();
       setSolicitudes(data);
     } catch (error) {
-      console.error(
-        "Error obteniendo solicitudes:",
-        error
-      );
+      console.error("Error obteniendo solicitudes:", error);
     } finally {
       setLoading(false);
     }
@@ -37,70 +32,62 @@ const Received = () => {
   }, []);
 
   const handleAprobar = async (
-    id,
-    origen
-  ) => {
-    try {
-      await aprobarSolicitud(
-        id,
-        origen
-      );
+  id,
+  origen
+) => {
+    console.log("APROBAR:", id, origen);
+  try {
+    await aprobarSolicitud(
+      id,
+      origen
+    );
 
-      fetchData();
-    } catch (error) {
-      console.error(
-        "Error aprobando:",
-        error
-      );
-    }
-  };
+    fetchData();
+  } catch (error) {
+    console.error(
+      "Error aprobando:",
+      error
+    );
+  }
+};
 
-  const handleRechazar = async (
-    id,
-    origen
-  ) => {
-    try {
-      await rechazarSolicitud(
-        id,
-        origen
-      );
+const handleRechazar = async (
+  id,
+  origen
+) => {
+  try {
+    await rechazarSolicitud(
+      id,
+      origen
+    );
 
-      fetchData();
-    } catch (error) {
-      console.error(
-        "Error rechazando:",
-        error
-      );
-    }
-  };
+    fetchData();
+  } catch (error) {
+    console.error(
+      "Error rechazando:",
+      error
+    );
+  }
+};
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentSolicitudes = solicitudes.slice(startIndex, startIndex + itemsPerPage);
+  const totalPages = Math.ceil(solicitudes.length / itemsPerPage);
 
   if (loading) {
-    return (
-      <CircularProgress
-        sx={{ mt: 4 }}
-      />
-    );
+    return <CircularProgress sx={{ mt: 4 }} />;
   }
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 3,
-      }}
-    >
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {solicitudes.length === 0 ? (
         <Typography color="text.secondary">
           No hay solicitudes recibidas.
         </Typography>
       ) : (
-        solicitudes.map((s, index) => (
+        <>
+          {currentSolicitudes.map((s, index) => (
   <RequestCard
-    key={
-      s.transferencia_id ||
-      `${s.origen}-${s.destino}-${index}`
-    }
+    key={s.transferencia_id || `${s.origen}-${s.destino}-${index}`}
     solicitud={s}
     type="received"
     onAprobar={() =>
@@ -116,7 +103,19 @@ const Received = () => {
       )
     }
   />
-))
+))}
+
+          {totalPages > 1 && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+              <Pagination
+                count={totalPages}
+                page={currentPage}
+                onChange={(_, value) => setCurrentPage(value)}
+                color="primary"
+              />
+            </Box>
+          )}
+        </>
       )}
     </Box>
   );

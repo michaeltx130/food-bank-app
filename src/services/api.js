@@ -171,19 +171,19 @@ export const createCategory = async (nombre) => {
 
 // Crear solicitud / transferencia
 export const createSolicitud = async ({
-  producto_nombre,
+  producto_id,
   cantidad,
-  origen,
   destino,
 }) => {
   try {
-    const response = await api.post(`/api/${CURRENT_NODE}/transferencias`, {
-      producto_nombre,
-      cantidad,
-      origen,
-      destino,
-      estado: "PENDIENTE",
-    });
+    const response = await api.post(
+      "/api/red/productos/enviar",
+      {
+        producto_id,
+        cantidad,
+        destino,
+      }
+    );
 
     return response.data;
   } catch (error) {

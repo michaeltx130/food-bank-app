@@ -1,12 +1,21 @@
 import { useState } from "react";
-import { Box, Button, Typography, Dialog, DialogContent, TextField, CircularProgress, Alert } from "@mui/material";
+import {
+  Box,
+  Button,
+  Typography,
+  Dialog,
+  DialogContent,
+  TextField,
+  CircularProgress,
+  Alert,
+} from "@mui/material";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import { createFamilia } from "../../services/api";
 
 const BeneficiaryForm = ({ open, setOpen, onSuccess }) => {
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
-  const [miembros, setMiembros] = useState(0);
+  const [miembros, setMiembros] = useState("");
   const [direccion, setDireccion] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -14,27 +23,47 @@ const BeneficiaryForm = ({ open, setOpen, onSuccess }) => {
   const handleClose = () => {
     setNombre("");
     setTelefono("");
-    setMiembros(0);
+    setMiembros("");
     setDireccion("");
     setError(null);
     setOpen(false);
   };
 
   const handleSubmit = async () => {
-    if (!nombre.trim()) return setError("El nombre es obligatorio.");
+    if (!nombre.trim()) {
+      return setError("El nombre de la familia es obligatorio.");
+    }
+
+    if (!telefono.trim()) {
+      return setError("El teléfono es obligatorio.");
+    }
+
+    if (!/^\d{10}$/.test(telefono)) {
+      return setError("El teléfono debe contener 10 dígitos.");
+    }
+
+    if (!miembros || Number(miembros) <= 0) {
+      return setError("La cantidad de miembros debe ser mayor a 0.");
+    }
+
+    if (!direccion.trim()) {
+      return setError("La dirección es obligatoria.");
+    }
 
     setLoading(true);
     setError(null);
 
     try {
       const resultado = await createFamilia({
-        nombre,
-        telefono,
+        nombre: nombre.trim(),
+        telefono: telefono.trim(),
         cantidad_miembros: Number(miembros),
-        direccion,
+        direccion: direccion.trim(),
       });
 
-      if (!resultado) return setError("Error al registrar la familia.");
+      if (!resultado) {
+        return setError("Error al registrar la familia.");
+      }
 
       onSuccess?.();
       handleClose();
@@ -58,9 +87,17 @@ const BeneficiaryForm = ({ open, setOpen, onSuccess }) => {
           Registrar Nueva Familia
         </Typography>
 
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-        <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 1 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ textTransform: "uppercase", letterSpacing: 1 }}
+        >
           Nombre de la Familia
         </Typography>
         <TextField
@@ -72,18 +109,31 @@ const BeneficiaryForm = ({ open, setOpen, onSuccess }) => {
 
         <Box sx={{ display: "flex", gap: 2, marginBottom: 3 }}>
           <Box sx={{ flex: 1 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 1 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ textTransform: "uppercase", letterSpacing: 1 }}
+            >
               Número de Teléfono
             </Typography>
             <TextField
               fullWidth
               value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
+              onChange={(e) =>
+                setTelefono(e.target.value.replace(/\D/g, "").slice(0, 10))
+              }
+              inputProps={{
+                maxLength: 10,
+              }}
               sx={{ marginTop: 1 }}
             />
           </Box>
           <Box sx={{ flex: 1 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 1 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ textTransform: "uppercase", letterSpacing: 1 }}
+            >
               Cantidad de Miembros
             </Typography>
             <TextField
@@ -91,12 +141,19 @@ const BeneficiaryForm = ({ open, setOpen, onSuccess }) => {
               fullWidth
               value={miembros}
               onChange={(e) => setMiembros(e.target.value)}
+              inputProps={{
+                min: 1,
+              }}
               sx={{ marginTop: 1 }}
             />
           </Box>
         </Box>
 
-        <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 1 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ textTransform: "uppercase", letterSpacing: 1 }}
+        >
           Dirección / Ubicación
         </Typography>
         <TextField
@@ -105,22 +162,37 @@ const BeneficiaryForm = ({ open, setOpen, onSuccess }) => {
           onChange={(e) => setDireccion(e.target.value)}
           sx={{ marginBottom: 4, marginTop: 1 }}
           InputProps={{
-            startAdornment: <LocationOnOutlinedIcon sx={{ color: "#9ca3af", marginRight: 1 }} />,
+            startAdornment: (
+              <LocationOnOutlinedIcon
+                sx={{ color: "#9ca3af", marginRight: 1 }}
+              />
+            ),
           }}
         />
 
         <Box sx={{ display: "flex", gap: 2 }}>
           <Button
-            fullWidth variant="outlined" onClick={handleClose} disabled={loading}
+            fullWidth
+            variant="outlined"
+            onClick={handleClose}
+            disabled={loading}
             sx={{ borderRadius: 3, textTransform: "none", paddingY: 1.5 }}
           >
             Cancelar
           </Button>
           <Button
-            fullWidth variant="contained" color="warning" onClick={handleSubmit} disabled={loading}
+            fullWidth
+            variant="contained"
+            color="warning"
+            onClick={handleSubmit}
+            disabled={loading}
             sx={{ borderRadius: 3, textTransform: "none", paddingY: 1.5 }}
           >
-            {loading ? <CircularProgress size={22} color="inherit" /> : "Registrar Familia"}
+            {loading ? (
+              <CircularProgress size={22} color="inherit" />
+            ) : (
+              "Registrar Familia"
+            )}
           </Button>
         </Box>
       </DialogContent>

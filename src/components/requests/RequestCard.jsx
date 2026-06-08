@@ -1,5 +1,4 @@
-import {Card,CardContent,Typography,Button,Box,} from "@mui/material";
-
+import { Card, CardContent, Typography, Button, Box } from "@mui/material";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import ApartmentOutlinedIcon from "@mui/icons-material/ApartmentOutlined";
 import CheckIcon from "@mui/icons-material/Check";
@@ -19,36 +18,56 @@ function RequestCard({
     destino,
     origen,
     estado,
+    aprobacion,
     created_at,
   } = solicitud;
 
   const esEnviada = type === "sent";
-  const sucursal = esEnviada
-    ? destino
-    : origen;
+  const sucursal = esEnviada ? destino : origen;
+
+  const estadoActual = aprobacion || estado;
 
   const estadoColor = {
+    aceptado: {
+      bg: "#dcfce7",
+      text: "#16a34a",
+    },
+
+    denegado: {
+      bg: "#fee2e2",
+      text: "#dc2626",
+    },
+
+    en_espera: {
+      bg: "#fef9c3",
+      text: "#854d0e",
+    },
+
     COMPLETADO: {
       bg: "#dcfce7",
       text: "#16a34a",
     },
+
     FALLIDO: {
       bg: "#fee2e2",
       text: "#dc2626",
     },
+
     PENDIENTE: {
       bg: "#fef9c3",
       text: "#854d0e",
     },
+
     DESCONTADO_ORIGEN: {
       bg: "#dbeafe",
       text: "#1d4ed8",
     },
-  }[estado] || {
+  }[estadoActual] || {
     bg: "#f3f4f6",
     text: "#6b7280",
   };
-console.log("SOLICITUD", solicitud);
+
+  console.log("SOLICITUD", solicitud);
   return (
     <Card
       sx={{
@@ -69,8 +88,7 @@ console.log("SOLICITUD", solicitud);
         <Box
           sx={{
             display: "flex",
-            justifyContent:
-              "space-between",
+            justifyContent: "space-between",
             alignItems: {
               xs: "flex-start",
               md: "center",
@@ -96,10 +114,7 @@ console.log("SOLICITUD", solicitud);
               }}
             />
 
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-            >
+            <Typography variant="subtitle2" color="text.secondary">
               {esEnviada
                 ? `Solicitud enviada a: ${sucursal}`
                 : `Solicitud de: ${sucursal}`}
@@ -114,16 +129,11 @@ console.log("SOLICITUD", solicitud);
                 py: 0.5,
                 borderRadius: 2,
                 fontWeight: 600,
-                backgroundColor:
-                  estadoColor.bg,
-                color:
-                  estadoColor.text,
+                backgroundColor: estadoColor.bg,
+                color: estadoColor.text,
               }}
             >
-              {estado.replace(
-                /_/g,
-                " "
-              )}
+              {String(estadoActual).replace(/_/g, " ").toUpperCase()}
             </Typography>
           )}
         </Box>
@@ -141,13 +151,11 @@ console.log("SOLICITUD", solicitud);
             sx={{
               width: 60,
               height: 60,
-              backgroundColor:
-                "#fff3ed",
+              backgroundColor: "#fff3ed",
               borderRadius: 3,
               display: "flex",
               alignItems: "center",
-              justifyContent:
-                "center",
+              justifyContent: "center",
             }}
           >
             <Inventory2OutlinedIcon
@@ -158,23 +166,22 @@ console.log("SOLICITUD", solicitud);
             />
           </Box>
 
-         <Typography
-  variant="h5"
-  sx={{
-    fontWeight: 500,
-    wordBreak: "break-word",
-  }}
->
-  {cantidad} {solicitud.producto?.unit || solicitud.unit || "pz"} de{" "}
-  {producto_nombre || "—"}
-</Typography>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 500,
+              wordBreak: "break-word",
+            }}
+          >
+            {cantidad} {solicitud.producto?.unit || solicitud.unit || "pz"} de{" "}
+            {producto_nombre || "—"}
+          </Typography>
         </Box>
 
         <Box
           sx={{
             display: "flex",
-            justifyContent:
-              "space-between",
+            justifyContent: "space-between",
             alignItems: {
               xs: "stretch",
               md: "center",
@@ -187,16 +194,9 @@ console.log("SOLICITUD", solicitud);
             gap: 2,
           }}
         >
-          <Typography
-            variant="body2"
-            color="text.secondary"
-          >
+          <Typography variant="body2" color="text.secondary">
             {created_at
-              ? `Fecha: ${new Date(
-                  created_at
-                ).toLocaleDateString(
-                  "es-MX"
-                )}`
+              ? `Fecha: ${new Date(created_at).toLocaleDateString("es-MX")}`
               : ""}
           </Typography>
 
@@ -215,18 +215,11 @@ console.log("SOLICITUD", solicitud);
               <Button
                 variant="contained"
                 color="warning"
-                startIcon={
-                  <CheckIcon />
-                }
-                onClick={() =>
-                  onAprobar?.(
-                    transferencia_id
-                  )
-                }
+                startIcon={<CheckIcon />}
+                onClick={() => onAprobar?.(transferencia_id)}
                 sx={{
                   borderRadius: 3,
-                  textTransform:
-                    "none",
+                  textTransform: "none",
                   px: 3,
                   flex: {
                     xs: 1,
@@ -240,18 +233,11 @@ console.log("SOLICITUD", solicitud);
               <Button
                 variant="outlined"
                 color="error"
-                startIcon={
-                  <CloseIcon />
-                }
-                onClick={() =>
-                  onRechazar?.(
-                    transferencia_id
-                  )
-                }
+                startIcon={<CloseIcon />}
+                onClick={() => onRechazar?.(transferencia_id)}
                 sx={{
                   borderRadius: 3,
-                  textTransform:
-                    "none",
+                  textTransform: "none",
                   px: 3,
                   flex: {
                     xs: 1,
