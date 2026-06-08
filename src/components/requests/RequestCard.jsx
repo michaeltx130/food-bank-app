@@ -19,101 +19,39 @@ function RequestCard({
     origen,
     estado,
     aprobacion,
+    error,
     created_at,
   } = solicitud;
 
   const esEnviada = type === "sent";
   const sucursal = esEnviada ? destino : origen;
-
   const estadoActual = aprobacion || estado;
 
   const estadoColor = {
-    aceptado: {
-      bg: "#dcfce7",
-      text: "#16a34a",
-    },
+    aceptado:          { bg: "#dcfce7", text: "#16a34a" },
+    denegado:          { bg: "#fee2e2", text: "#dc2626" },
+    en_espera:         { bg: "#fef9c3", text: "#854d0e" },
+    COMPLETADO:        { bg: "#dcfce7", text: "#16a34a" },
+    FALLIDO:           { bg: "#fee2e2", text: "#dc2626" },
+    PENDIENTE:         { bg: "#fef9c3", text: "#854d0e" },
+    DESCONTADO_ORIGEN: { bg: "#dbeafe", text: "#1d4ed8" },
+  }[estadoActual] || { bg: "#f3f4f6", text: "#6b7280" };
 
-    denegado: {
-      bg: "#fee2e2",
-      text: "#dc2626",
-    },
-
-    en_espera: {
-      bg: "#fef9c3",
-      text: "#854d0e",
-    },
-
-    COMPLETADO: {
-      bg: "#dcfce7",
-      text: "#16a34a",
-    },
-
-    FALLIDO: {
-      bg: "#fee2e2",
-      text: "#dc2626",
-    },
-
-    PENDIENTE: {
-      bg: "#fef9c3",
-      text: "#854d0e",
-    },
-
-    DESCONTADO_ORIGEN: {
-      bg: "#dbeafe",
-      text: "#1d4ed8",
-    },
-  }[estadoActual] || {
-    bg: "#f3f4f6",
-    text: "#6b7280",
-  };
-
-  console.log("SOLICITUD", solicitud);
   return (
-    <Card
-      sx={{
-        width: "100%",
-        borderRadius: 4,
-        boxShadow: 2,
-        boxSizing: "border-box",
-      }}
-    >
-      <CardContent
-        sx={{
-          p: {
-            xs: 2,
-            md: 4,
-          },
-        }}
-      >
+    <Card sx={{ width: "100%", borderRadius: 4, boxShadow: 2, boxSizing: "border-box" }}>
+      <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: {
-              xs: "flex-start",
-              md: "center",
-            },
-            flexDirection: {
-              xs: "column",
-              md: "row",
-            },
+            alignItems: { xs: "flex-start", md: "center" },
+            flexDirection: { xs: "column", md: "row" },
             gap: 2,
           }}
         >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1,
-            }}
-          >
-            <ApartmentOutlinedIcon
-              sx={{
-                color: "#6b7280",
-                fontSize: 18,
-              }}
-            />
-
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <ApartmentOutlinedIcon sx={{ color: "#6b7280", fontSize: 18 }} />
             <Typography variant="subtitle2" color="text.secondary">
               {esEnviada
                 ? `Solicitud enviada a: ${sucursal}`
@@ -138,15 +76,7 @@ function RequestCard({
           )}
         </Box>
 
-        <Box
-          sx={{
-            display: "flex",
-            gap: 2,
-            alignItems: "center",
-            mt: 3,
-            flexWrap: "wrap",
-          }}
-        >
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center", mt: 3, flexWrap: "wrap" }}>
           <Box
             sx={{
               width: 60,
@@ -158,97 +88,111 @@ function RequestCard({
               justifyContent: "center",
             }}
           >
-            <Inventory2OutlinedIcon
-              sx={{
-                color: "#f97316",
-                fontSize: 32,
-              }}
-            />
+            <Inventory2OutlinedIcon sx={{ color: "#f97316", fontSize: 32 }} />
           </Box>
 
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 500,
-              wordBreak: "break-word",
-            }}
-          >
+          <Typography variant="h5" sx={{ fontWeight: 500, wordBreak: "break-word" }}>
             {cantidad} {solicitud.producto?.unit || solicitud.unit || "pz"} de{" "}
             {producto_nombre || "—"}
           </Typography>
         </Box>
 
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: {
-              xs: "stretch",
-              md: "center",
-            },
-            flexDirection: {
-              xs: "column",
-              md: "row",
-            },
-            mt: 4,
-            gap: 2,
-          }}
-        >
-          <Typography variant="body2" color="text.secondary">
-            {created_at
-              ? `Fecha: ${new Date(created_at).toLocaleDateString("es-MX")}`
-              : ""}
-          </Typography>
+        <Box sx={{ display: "flex", flexDirection: "column", mt: 4, gap: 2 }}>
 
-          {showActions && (
+          {aprobacion === "denegado" && error && (
             <Box
               sx={{
                 display: "flex",
-                gap: 2,
-                flexWrap: "wrap",
-                width: {
-                  xs: "100%",
-                  md: "auto",
-                },
+                alignItems: "flex-start",
+                gap: 1.5,
+                px: 2.5,
+                py: 2,
+                backgroundColor: "#fee2e2",
+                borderRadius: 3,
+                border: "1px solid #fca5a5",
+                width: "100%",
               }}
             >
-              <Button
-                variant="contained"
-                color="warning"
-                startIcon={<CheckIcon />}
-                onClick={() => onAprobar?.(transferencia_id)}
-                sx={{
-                  borderRadius: 3,
-                  textTransform: "none",
-                  px: 3,
-                  flex: {
-                    xs: 1,
-                    md: "unset",
-                  },
-                }}
-              >
-                Aprobar
-              </Button>
-
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<CloseIcon />}
-                onClick={() => onRechazar?.(transferencia_id)}
-                sx={{
-                  borderRadius: 3,
-                  textTransform: "none",
-                  px: 3,
-                  flex: {
-                    xs: 1,
-                    md: "unset",
-                  },
-                }}
-              >
-                Rechazar
-              </Button>
+              <CloseIcon sx={{ color: "#dc2626", fontSize: 18, mt: "2px", flexShrink: 0 }} />
+              <Box>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "#991b1b",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.5,
+                    display: "block",
+                    lineHeight: 1.2,
+                    mb: 0.5,
+                  }}
+                >
+                  Motivo de rechazo
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#b91c1c", lineHeight: 1.5 }}>
+                  {error}
+                </Typography>
+              </Box>
             </Box>
           )}
+
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexDirection: { xs: "column", md: "row" },
+              gap: 2,
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              {created_at
+                ? `Fecha: ${new Date(created_at).toLocaleDateString("es-MX")}`
+                : ""}
+            </Typography>
+
+            {showActions && (aprobacion === "en_espera" || !aprobacion) && (
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                  flexWrap: "wrap",
+                  width: { xs: "100%", md: "auto" },
+                }}
+              >
+                <Button
+                  variant="contained"
+                  color="warning"
+                  startIcon={<CheckIcon />}
+                  onClick={() => onAprobar?.(transferencia_id)}
+                  sx={{
+                    borderRadius: 3,
+                    textTransform: "none",
+                    px: 3,
+                    flex: { xs: 1, md: "unset" },
+                  }}
+                >
+                  Aprobar
+                </Button>
+
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<CloseIcon />}
+                  onClick={() => onRechazar?.(transferencia_id)}
+                  sx={{
+                    borderRadius: 3,
+                    textTransform: "none",
+                    px: 3,
+                    flex: { xs: 1, md: "unset" },
+                  }}
+                >
+                  Rechazar
+                </Button>
+              </Box>
+            )}
+          </Box>
+
         </Box>
       </CardContent>
     </Card>

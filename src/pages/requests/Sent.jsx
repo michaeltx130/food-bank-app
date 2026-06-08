@@ -1,20 +1,10 @@
 import { useState, useEffect } from "react";
 import RequestCard from "../../components/requests/RequestCard";
-import {
-  Box,
-  Button,
-  Typography,
-  Dialog,
-  DialogContent,
-  TextField,
-  MenuItem,
-  CircularProgress,
-  Pagination,
-} from "@mui/material";
+import {Box,Button,Typography,Dialog,DialogContent,TextField,MenuItem,Pagination,Skeleton,Card,CardContent,} from "@mui/material";
 
 import {
   getSolicitudesEnviadas,
-  getProducts,
+  getBranchProducts,
   createSolicitud,
 } from "../../services/api";
 
@@ -54,40 +44,28 @@ const Sent = ({ open, setOpen }) => {
   }, []);
 
   const handleSucursalChange = async (e) => {
-  const valor = e.target.value;
-
-  setSucursal(valor);
-  setProductoId("");
-
-  setLoadingProductos(true);
-
-  const data = await getProducts();
-
-  setProductosSucursal(data);
-  setLoadingProductos(false);
-};
+    const valor = e.target.value;
+    setSucursal(valor);
+    setProductoId("");
+    setLoadingProductos(true);
+    const data = await getBranchProducts(valor);
+    setProductosSucursal(data.productos || data);
+    setLoadingProductos(false);
+  };
 
   const handleEnviar = async () => {
     if (!sucursal || !productoId || !cantidad) return;
-
     setEnviando(true);
-
     try {
-      const productoElegido = productosSucursal.find(
-        (p) => p.id === Number(productoId),
-      );
-
       await createSolicitud({
         producto_id: Number(productoId),
         cantidad: Number(cantidad),
         destino: sucursal,
       });
-
       setOpen(false);
       setSucursal("");
       setProductoId("");
       setCantidad("");
-
       fetchSolicitudes();
     } catch (e) {
       console.error("Error enviando solicitud:", e);
@@ -97,26 +75,27 @@ const Sent = ({ open, setOpen }) => {
   };
 
   const startIndex = (currentPage - 1) * itemsPerPage;
-
-  const currentSolicitudes = solicitudes.slice(
-    startIndex,
-    startIndex + itemsPerPage,
-  );
-
+  const currentSolicitudes = solicitudes.slice(startIndex, startIndex + itemsPerPage);
   const totalPages = Math.ceil(solicitudes.length / itemsPerPage);
 
   return (
     <>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 3,
-          marginBottom: 8,
-        }}
-      >
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 8 }}>
         {loading ? (
-          <CircularProgress sx={{ mt: 4 }} />
+          [1, 2, 3].map((item) => (
+            <Card key={item} sx={{ borderRadius: 4, boxShadow: 2 }}>
+              <CardContent>
+                <Skeleton width="35%" height={25} />
+                <Box sx={{ mt: 2 }}>
+                  <Skeleton width="70%" height={45} />
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
+                  <Skeleton width={120} height={25} />
+                  <Skeleton width={180} height={40} />
+                </Box>
+              </CardContent>
+            </Card>
+          ))
         ) : solicitudes.length === 0 ? (
           <Typography color="text.secondary">
             No hay solicitudes enviadas.
@@ -133,17 +112,11 @@ const Sent = ({ open, setOpen }) => {
             ))}
 
             {totalPages > 1 && (
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  mt: 4,
-                }}
-              >
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
                 <Pagination
                   count={totalPages}
                   page={currentPage}
-                  onChange={(event, value) => setCurrentPage(value)}
+                  onChange={(_, value) => setCurrentPage(value)}
                   color="primary"
                 />
               </Box>
@@ -157,9 +130,7 @@ const Sent = ({ open, setOpen }) => {
         onClose={() => setOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{
-          sx: { borderRadius: "40px" },
-        }}
+        PaperProps={{ sx: { borderRadius: "40px" } }}
       >
         <DialogContent sx={{ padding: "40px" }}>
           <Typography variant="h4" fontWeight="bold" mb={1}>
@@ -232,11 +203,7 @@ const Sent = ({ open, setOpen }) => {
               fullWidth
               variant="outlined"
               onClick={() => setOpen(false)}
-              sx={{
-                borderRadius: 3,
-                textTransform: "none",
-                paddingY: 1.5,
-              }}
+              sx={{ borderRadius: 3, textTransform: "none", paddingY: 1.5 }}
             >
               Cancelar
             </Button>
@@ -247,11 +214,7 @@ const Sent = ({ open, setOpen }) => {
               color="warning"
               onClick={handleEnviar}
               disabled={enviando || !sucursal || !productoId || !cantidad}
-              sx={{
-                borderRadius: 3,
-                textTransform: "none",
-                paddingY: 1.5,
-              }}
+              sx={{ borderRadius: 3, textTransform: "none", paddingY: 1.5 }}
             >
               {enviando ? "Enviando..." : "Enviar Solicitud"}
             </Button>
