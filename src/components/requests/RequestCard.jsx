@@ -39,7 +39,6 @@ function RequestCard({
   return (
     <Card sx={{ width: "100%", borderRadius: 4, boxShadow: 2, boxSizing: "border-box" }}>
       <CardContent sx={{ p: { xs: 2, md: 4 } }}>
-
         <Box
           sx={{
             display: "flex",
@@ -54,6 +53,8 @@ function RequestCard({
             <Typography variant="subtitle2" color="text.secondary">
               {esEnviada
                 ? `Solicitud enviada a: ${origen}`
+                // ✅ CORRECCIÓN: recibida → quien me pidió es `destino`, no `origen`
+                // antes: `Solicitud de: ${destino}` (mostraba tu propio nodo)
                 : `Solicitud de: ${destino}`}
             </Typography>
           </Box>
@@ -97,7 +98,6 @@ function RequestCard({
         </Box>
 
         <Box sx={{ display: "flex", flexDirection: "column", mt: 4, gap: 2 }}>
-
           {aprobacion === "denegado" && error && (
             <Box
               sx={{
@@ -191,7 +191,6 @@ function RequestCard({
               </Box>
             )}
           </Box>
-
         </Box>
       </CardContent>
     </Card>
