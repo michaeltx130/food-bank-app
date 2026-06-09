@@ -31,6 +31,7 @@ const Sent = ({ open, setOpen }) => {
   const [cantidad, setCantidad] = useState("");
   const [enviando, setEnviando] = useState(false);
 
+
   const fetchSolicitudes = async (showLoader = true) => {
   if (showLoader) setLoading(true);
 
@@ -44,6 +45,8 @@ const Sent = ({ open, setOpen }) => {
 
  useEffect(() => {
   fetchSolicitudes();
+  const interval = setInterval(() => fetchSolicitudes(false), 10000); // cada 10s
+  return () => clearInterval(interval);
 }, []);
   const handleSucursalChange = async (e) => {
   const valor = e.target.value;
@@ -98,6 +101,8 @@ const Sent = ({ open, setOpen }) => {
     setEnviando(false);
   }
 };
+
+
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentSolicitudes = solicitudes.slice(startIndex, startIndex + itemsPerPage);

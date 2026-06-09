@@ -42,8 +42,10 @@ const Received = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+  fetchData();
+  const interval = setInterval(() => fetchData(false), 10000);
+  return () => clearInterval(interval);
+}, []);
   const handleAprobar = async (id, origen) => {
     try {
       await aprobarSolicitud(id, origen);

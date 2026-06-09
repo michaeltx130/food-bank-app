@@ -25,13 +25,13 @@ const Dashboard = () => {
           [
             getProducts(),
             getBeneficiarios(),
-            // getSolicitudesRecibidas(),
+            getSolicitudesRecibidas(),
           ],
         );
 
         setProducts(productsData);
         setFamilias(familiasData);
-        // setSolicitudes(solicitudesData);
+        setSolicitudes(solicitudesData);
       } catch (error) {
         console.error(error);
       } finally {
@@ -43,9 +43,10 @@ const Dashboard = () => {
 
   const stockBajo = products.filter((p) => p.cantidad > 0 && p.cantidad <= 10);
 
-  const solicitudesPendientes = solicitudes.filter(
-    (s) => s.estado === "PENDIENTE",
-  );
+const solicitudesPendientes = solicitudes.filter(
+  (s) => s.aprobacion === "en_espera"
+);
+ const totalSolicitudes = solicitudes.length;
   const stats = [
     {
       title: "Productos en Stock",
@@ -67,7 +68,7 @@ const Dashboard = () => {
 
     {
       title: "Solicitudes Recibidas",
-      value: loading ? "..." : solicitudesPendientes.length,
+      value: loading ? "..." : totalSolicitudes,
       description: "pendientes de respuesta",
       icon: <Mail />,
       iconBg: "#FFF7ED",
@@ -86,7 +87,6 @@ const Dashboard = () => {
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
       <Sidebar />
-      {/* Contenedor principal del dashboard */}
       <Box
         sx={{
           flexGrow: 1,
@@ -107,7 +107,6 @@ const Dashboard = () => {
           Dashboard
         </Typography>
 
-        {/* Contenedor para las tarjetas de estadísticas */}
         <Box
           sx={{
             display: "grid",
@@ -133,7 +132,6 @@ const Dashboard = () => {
             />
           ))}
         </Box>
-        {/*Contenedor para los paneles*/}
         <Box
           sx={{
             display: "grid",
@@ -214,34 +212,46 @@ const Dashboard = () => {
             ) : (
               <>
                 {solicitudesPendientes.map((s) => (
-                  <Box
-                    key={s.id}
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      py: 1,
-                      borderBottom: "1px solid #f3f4f6",
-                    }}
-                  >
-                    <Typography>{s.producto_nombre}</Typography>
+  <Box
+    key={s.id}
+    sx={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      py: 1,
+      borderBottom: "1px solid #f3f4f6",
+    }}
+  >
+    <Box>
+      <Typography fontWeight={600}>
+        {s.producto_nombre}
+      </Typography>
 
-                    <Box
-                      sx={{
-                        backgroundColor: "#f3f4f6",
-                        px: 1.2,
-                        py: 0.3,
-                        borderRadius: 2,
-                        fontSize: "12px",
-                        color: "#6b7280",
-                        fontWeight: 600,
-                        textTransform: "capitalize",
-                      }}
-                    >
-                      {s.origen}
-                    </Box>
-                  </Box>
-                ))}
+      <Typography
+        variant="caption"
+        color="text.secondary"
+      >
+        {s.cantidad} {s.producto?.unit || "pz"}
+      </Typography>
+    </Box>
+
+    <Box
+      sx={{
+        backgroundColor: "#f3f4f6",
+        px: 1.2,
+        py: 0.3,
+        borderRadius: 2,
+        fontSize: "12px",
+        color: "#6b7280",
+        fontWeight: 600,
+        textTransform: "capitalize",
+      }}
+    >
+      {s.destino}
+    </Box>
+  </Box>
+))}
+               
               </>
             )}
           </InfoPanel>

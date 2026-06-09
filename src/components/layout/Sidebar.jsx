@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import logo from "../../assets/logo.jpeg";
 
 import {
   Drawer,
@@ -24,7 +25,6 @@ import {
 } from "@mui/icons-material";
 
 const Sidebar = () => {
-  // 🔹 Opciones del menú
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -44,11 +44,7 @@ const Sidebar = () => {
     { text: "Red de Inventarios", icon: <NetworkIcon />, path: "/network" },
     { text: "Solicitudes", icon: <RequestIcon />, path: "/requests" },
     { text: "Donaciones", icon: <DonationIcon />, path: "/donations" },
-    {
-      text: "Beneficiarios",
-      icon: <BeneficiaryIcon />,
-      path: "/beneficiaries",
-    },
+    { text: "Beneficiarios", icon: <BeneficiaryIcon />, path: "/beneficiaries" },
     { text: "Historial", icon: <HistoryIcon />, path: "/history" },
   ];
 
@@ -58,96 +54,83 @@ const Sidebar = () => {
       sx={{
         width: 260,
         flexShrink: 0,
-
         "& .MuiDrawer-paper": {
-          height: "100vh",
+          
           width: 260,
           boxSizing: "border-box",
           backgroundColor: "#16a34a",
           color: "#ffffff",
           border: "none",
           overflow: "hidden",
+          borderRadius: "1px",
+         
+          boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
         },
       }}
     >
-      {/* Contenedor principal del sidebar */}
       <Box
         sx={{
           display: "flex",
           flexDirection: "column",
-          padding: 2,
-          overflow: "hidden",
+          height: "100%",
+          p: 2,
         }}
       >
-        <Box>
-          {/* Logo y sucursal */}
+        {/* Header */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
           <Box
+            component="img"
+            src={logo}
+            alt="Logo"
             sx={{
-              marginBottom: 2,
+              width: 50,
+              height: 50,
+              borderRadius: "50%",
+              objectFit: "cover",
+              backgroundColor: "white",
+              p: 0.5,
             }}
-          >
-            <Typography
-              variant="caption"
-              sx={{ fontWeight: "Regular", opacity: 0.8 }}
-            >
+          />
+          <Box>
+            <Typography variant="caption" sx={{ opacity: 0.8 }}>
               Tu Sucursal
             </Typography>
-
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: "bold",
-              }}
-            >
+            <Typography variant="h6" sx={{ fontWeight: "bold" }}>
               {currentBranch}
             </Typography>
           </Box>
-
-          <Divider
-            sx={{ borderColor: "rgba(255,255,255,0.2)", marginBottom: 2 }}
-          />
-
-          {/* Menú de opciones */}
-          <List>
-            {menuItems.map((item) => (
-              <ListItemButton
-                key={item.text}
-                onClick={() => navigate(item.path)}
-                selected={location.pathname === item.path}
-                sx={{
-                  borderRadius: 3,
-                  marginBottom: 1,
-
-                  "&.Mui-selected": {
-                    backgroundColor: "#15803d",
-                  },
-
-                  "&.Mui-selected:hover": {
-                    backgroundColor: "#166534",
-                  },
-
-                  "&:hover": {
-                    backgroundColor: "#15803d",
-                  },
-                }}
-              >
-                <ListItemIcon
-                  sx={{
-                    color: "#ffffff",
-                    minWidth: 40,
-                  }}
-                >
-                  {item.icon}
-                </ListItemIcon>
-
-                <ListItemText primary={item.text} />
-              </ListItemButton>
-            ))}
-          </List>
         </Box>
 
-        {/* Parte inferior
-        <Box
+        <Divider sx={{ borderColor: "rgba(255,255,255,0.2)", mb: 2 }} />
+
+        {/* Menú principal */}
+        <List sx={{ flex: 1 }}>
+          {menuItems.map((item) => (
+            <ListItemButton
+              key={item.text}
+              onClick={() => navigate(item.path)}
+              selected={location.pathname === item.path}
+              sx={{
+                borderRadius: 2,
+                mb: 0.5,
+                "&.Mui-selected": {
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                },
+                "&:hover": {
+                  backgroundColor: "#15803d",
+                },
+              }}
+            >
+              <ListItemIcon sx={{ color: "#ffffff", minWidth: 40 }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText primary={item.text} />
+            </ListItemButton>
+          ))}
+        </List>
+
+        {/* Parte inferior */}
+        {/* <Box
           sx={{
             marginTop: "auto",
           }}
@@ -158,7 +141,6 @@ const Sidebar = () => {
           <ListItemButton
             sx={{
               borderRadius: 2,
-
               "&:hover": {
                 backgroundColor: "#15803d",
               },
@@ -175,7 +157,8 @@ const Sidebar = () => {
 
             <ListItemText primary="Cambiar sucursal" />
           </ListItemButton>
-        </Box>*/}
+        </Box> */}
+
       </Box>
     </Drawer>
   );
