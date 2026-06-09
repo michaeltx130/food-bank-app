@@ -1,28 +1,38 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import {
-  Box, Typography, Pagination, CircularProgress, Chip,
-} from "@mui/material";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
+import { Box, Typography, Pagination, Skeleton, Chip } from "@mui/material";
 import Sidebar from "../components/layout/Sidebar";
 import InfoPanel from "../components/dashboard/InfoPanel";
 import HistoryCard from "../components/history/HistoryCard";
 import {
-  VolunteerActivism, Inventory2,
-  History as HistoryIcon, CallReceived, CallMade, Email,
+  VolunteerActivism,
+  Inventory2,
+  History as HistoryIcon,
+  CallReceived,
+  CallMade,
+  Email,
 } from "@mui/icons-material";
 import {
-  getDonaciones, getEntregas,
-  getSolicitudesEnviadas, getSolicitudesRecibidas,
+  getDonaciones,
+  getEntregas,
+  getSolicitudesEnviadas,
+  getSolicitudesRecibidas,
 } from "../services/api";
 
 const ESTADOS_MAP = {
-  "PENDIENTE":  "EN ESPERA",
-  "EN_ESPERA":  "EN ESPERA",
-  "ACEPTADO":   "ACEPTADO",
-  "APROBADO":   "ACEPTADO",
+  PENDIENTE: "EN ESPERA",
+  EN_ESPERA: "EN ESPERA",
+  ACEPTADO: "ACEPTADO",
+  APROBADO: "ACEPTADO",
   // ✅ CORRECCIÓN: agregado EN_ESPERA con guión bajo como clave adicional
   // para cubrir el valor que regresa el campo `aprobacion` del backend
-  "RECHAZADO":  "DENEGADO",
-  "DENEGADO":   "DENEGADO",
+  RECHAZADO: "DENEGADO",
+  DENEGADO: "DENEGADO",
 };
 
 // ✅ CORRECCIÓN: íconos resueltos en render, nunca guardados en estado
@@ -30,22 +40,35 @@ const ESTADOS_MAP = {
 // lo que causaba re-render completo cada vez que se entraba a la pantalla
 const resolveIcon = (iconType) => {
   switch (iconType) {
-    case "donacion": return { icon: <VolunteerActivism />, iconBg: "#DCFCE7", iconColor: "#16A34A" };
-    case "entrega":  return { icon: <Inventory2 />,        iconBg: "#FEF3C7", iconColor: "#D97706" };
-    case "recibida": return { icon: <CallReceived />,      iconBg: "#EDE9FE", iconColor: "#7C3AED" };
-    case "enviada":  return { icon: <CallMade />,          iconBg: "#DBEAFE", iconColor: "#2563EB" };
-    default:         return { icon: <HistoryIcon />,       iconBg: "#F3F4F6", iconColor: "#6B7280" };
+    case "donacion":
+      return {
+        icon: <VolunteerActivism />,
+        iconBg: "#DCFCE7",
+        iconColor: "#16A34A",
+      };
+    case "entrega":
+      return { icon: <Inventory2 />, iconBg: "#FEF3C7", iconColor: "#D97706" };
+    case "recibida":
+      return {
+        icon: <CallReceived />,
+        iconBg: "#EDE9FE",
+        iconColor: "#7C3AED",
+      };
+    case "enviada":
+      return { icon: <CallMade />, iconBg: "#DBEAFE", iconColor: "#2563EB" };
+    default:
+      return { icon: <HistoryIcon />, iconBg: "#F3F4F6", iconColor: "#6B7280" };
   }
 };
 
 const History = () => {
-  const [history, setHistory]         = useState([]);
-  const [loading, setLoading]         = useState(false);
-  const [hasLoaded, setHasLoaded]     = useState(false);
-  const [filter, setFilter]           = useState("Todas");
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [filter, setFilter] = useState("Todas");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const intervalRef  = useRef(null);
+  const intervalRef = useRef(null);
 
   // ✅ CORRECCIÓN: useCallback para que el intervalo no capture
   // un closure desactualizado en cada render
@@ -60,8 +83,8 @@ const History = () => {
       ]);
 
       const historialDonaciones = donaciones.map((d) => ({
-        type:     "Donaciones",
-        title:    "Donación recibida",
+        type: "Donaciones",
+        title: "Donación recibida",
         // ✅ CORRECCIÓN: solo guardamos string "donacion", no el JSX <VolunteerActivism />
         iconType: "donacion",
         details: [
@@ -73,8 +96,8 @@ const History = () => {
       }));
 
       const historialEntregas = entregas.map((e) => ({
-        type:     "Entregas",
-        title:    "Entrega realizada",
+        type: "Entregas",
+        title: "Entrega realizada",
         // ✅ CORRECCIÓN: solo guardamos string "entrega", no el JSX <Inventory2 />
         iconType: "entrega",
         details: [
@@ -89,7 +112,10 @@ const History = () => {
       // cuando la misma transferencia aparece en enviadas y recibidas
       const todasTransferencias = [
         ...new Map(
-          [...enviadas, ...recibidas].map((t) => [t.transferencia_id || t.id, t])
+          [...enviadas, ...recibidas].map((t) => [
+            t.transferencia_id || t.id,
+            t,
+          ]),
         ).values(),
       ];
 
@@ -106,7 +132,7 @@ const History = () => {
         // porque el backend actualiza `aprobacion` al aprobar/rechazar,
         // no el campo `estado`
         const estadoRaw = (t.aprobacion || t.estado || "").toUpperCase();
-        const estado    = ESTADOS_MAP[estadoRaw] ?? "EN ESPERA";
+        const estado = ESTADOS_MAP[estadoRaw] ?? "EN ESPERA";
 
         return {
           type: "Solicitudes",
@@ -127,7 +153,7 @@ const History = () => {
             `Estado: ${estado}`,
           ],
           status: estado,
-          date:   t.created_at,
+          date: t.created_at,
         };
       });
 
@@ -159,35 +185,35 @@ const History = () => {
     return history.filter((item) => item.type === filter);
   }, [history, filter]);
 
-  const startIndex   = (currentPage - 1) * itemsPerPage;
-  const currentItems = filteredHistory.slice(startIndex, startIndex + itemsPerPage);
-  const totalPages   = Math.ceil(filteredHistory.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentItems = filteredHistory.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
+  const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
 
   const filters = [
-    { label: "Todas",       icon: <HistoryIcon       sx={{ fontSize: 18 }} /> },
-    { label: "Donaciones",  icon: <VolunteerActivism  sx={{ fontSize: 18 }} /> },
-    { label: "Solicitudes", icon: <Email             sx={{ fontSize: 18 }} /> },
-    { label: "Entregas",    icon: <Inventory2        sx={{ fontSize: 18 }} /> },
+    { label: "Todas", icon: <HistoryIcon sx={{ fontSize: 18 }} /> },
+    { label: "Donaciones", icon: <VolunteerActivism sx={{ fontSize: 18 }} /> },
+    { label: "Solicitudes", icon: <Email sx={{ fontSize: 18 }} /> },
+    { label: "Entregas", icon: <Inventory2 sx={{ fontSize: 18 }} /> },
   ];
-
-  if (loading && !hasLoaded) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
       <Sidebar />
-      <Box sx={{
-        flexGrow: 1,
-        padding: { xs: 2, sm: 3, md: 4 },
-        backgroundColor: "#F9FAFB",
-        overflowY: "auto",
-      }}>
-        <Typography variant="h4" sx={{ fontWeight: "bold", marginBottom: 4, color: "#171717" }}>
+      <Box
+        sx={{
+          flexGrow: 1,
+          padding: { xs: 2, sm: 3, md: 4 },
+          backgroundColor: "#F9FAFB",
+          overflowY: "auto",
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: "bold", marginBottom: 4, color: "#171717" }}
+        >
           Historial
         </Typography>
 
@@ -199,24 +225,32 @@ const History = () => {
                 icon={item.icon}
                 label={item.label}
                 clickable
-                onClick={() => { setFilter(item.label); setCurrentPage(1); }}
+                onClick={() => {
+                  setFilter(item.label);
+                  setCurrentPage(1);
+                }}
                 sx={{
                   height: 42,
                   borderRadius: "14px",
                   fontWeight: 600,
                   fontSize: "14px",
                   transition: "0.2s ease",
-                  backgroundColor: filter === item.label ? "#F97316" : "#F5F5F4",
-                  color:           filter === item.label ? "#FFFFFF" : "#525252",
-                  border:          filter === item.label ? "1px solid #F97316" : "1px solid #E7E5E4",
+                  backgroundColor:
+                    filter === item.label ? "#F97316" : "#F5F5F4",
+                  color: filter === item.label ? "#FFFFFF" : "#525252",
+                  border:
+                    filter === item.label
+                      ? "1px solid #F97316"
+                      : "1px solid #E7E5E4",
                   "& .MuiChip-icon": {
-                    color:      filter === item.label ? "#FFFFFF" : "#737373",
-                    fontSize:   "18px",
+                    color: filter === item.label ? "#FFFFFF" : "#737373",
+                    fontSize: "18px",
                     marginLeft: "6px",
                   },
                   "&:hover": {
-                    transform:       "translateY(-1px)",
-                    backgroundColor: filter === item.label ? "#EA580C" : "#EEEEEE",
+                    transform: "translateY(-1px)",
+                    backgroundColor:
+                      filter === item.label ? "#EA580C" : "#EEEEEE",
                   },
                 }}
               />
@@ -225,16 +259,57 @@ const History = () => {
 
           <InfoPanel
             title="Actividad reciente"
+            scrollable={false}
             icon={<HistoryIcon sx={{ color: "#7C3AED" }} />}
           >
-            <Box sx={{ display: "flex", flexDirection: "column" }}>
-              {currentItems.length === 0 ? (
-                <Typography color="text.secondary">Sin actividad reciente.</Typography>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              {loading && !hasLoaded ? (
+                [...Array(5)].map((_, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      mb: 3,
+                      pb: 3,
+                      borderBottom: index !== 4 ? "1px solid #E7E5E4" : "none",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: 2,
+                      }}
+                    >
+                      <Skeleton variant="rounded" width={64} height={64} />
+
+                      <Box sx={{ flex: 1 }}>
+                        <Skeleton width="40%" height={32} />
+
+                        <Skeleton width="60%" height={24} />
+
+                        <Skeleton width="50%" height={24} />
+
+                        <Skeleton width="35%" height={24} />
+                      </Box>
+
+                      <Skeleton width={120} height={40} />
+                    </Box>
+                  </Box>
+                ))
+              ) : currentItems.length === 0 ? (
+                <Typography color="text.secondary">
+                  Sin actividad reciente.
+                </Typography>
               ) : (
                 currentItems.map((item, index) => {
-                  // ✅ CORRECCIÓN: resolvemos el ícono aquí en el render,
-                  // no viene del estado
-                  const { icon, iconBg, iconColor } = resolveIcon(item.iconType);
+                  const { icon, iconBg, iconColor } = resolveIcon(
+                    item.iconType,
+                  );
+
                   return (
                     <HistoryCard
                       key={`${item.type}-${item.date}-${index}`}

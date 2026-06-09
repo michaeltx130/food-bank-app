@@ -2,7 +2,13 @@ import React from "react";
 
 import { Card, CardContent, Typography, Box } from "@mui/material";
 
-const InfoPanel = ({ title, icon, children, maxHeight = 285 }) => {
+const InfoPanel = ({
+  title,
+  icon,
+  children,
+  maxHeight = 285,
+  scrollable = true,
+}) => {
   return (
     <Card
       sx={{
@@ -43,9 +49,9 @@ const InfoPanel = ({ title, icon, children, maxHeight = 285 }) => {
         {/* Content Scroll */}
         <Box
           sx={{
-            maxHeight,
-            overflowY: "auto",
-            pr: 1,
+            maxHeight: scrollable ? maxHeight : "none",
+            overflowY: scrollable ? "auto" : "visible",
+            pr: scrollable ? 1 : 0,
 
             "&::-webkit-scrollbar": {
               width: "8px",

@@ -176,14 +176,11 @@ export const createSolicitud = async ({
   cantidad,
 }) => {
   try {
-    const response = await api.post(
-      "/api/red/productos/solicitar",
-      {
-        origen,
-        producto_nombre,
-        cantidad,
-      }
-    );
+    const response = await api.post("/api/red/productos/solicitar", {
+      origen,
+      producto_nombre,
+      cantidad,
+    });
 
     return response.data;
   } catch (error) {
@@ -191,7 +188,7 @@ export const createSolicitud = async ({
     throw error;
   }
 };
-// ✅ CORRECCIÓN: "yo envié" = yo soy el DESTINO (le pedí a otro nodo que es el origen)
+
 export const getSolicitudesEnviadas = async () => {
   try {
     const respuestas = await Promise.all(
@@ -199,21 +196,20 @@ export const getSolicitudesEnviadas = async () => {
         try {
           const r = await axios.get(
             `http://${host}/api/${branch}/transferencias`,
-            { timeout: 3000 }
+            { timeout: 3000 },
           );
           return r.data || [];
         } catch {
           console.log(`${branch} no disponible`);
           return [];
         }
-      })
+      }),
     );
 
     const todas = respuestas.flat();
 
-    // ✅ yo envié → yo soy el DESTINO
     const enviadas = todas.filter(
-      (t) => t.destino?.toLowerCase() === CURRENT_NODE.toLowerCase()
+      (t) => t.destino?.toLowerCase() === CURRENT_NODE.toLowerCase(),
     );
 
     return [
@@ -225,7 +221,6 @@ export const getSolicitudesEnviadas = async () => {
   }
 };
 
-// ✅ CORRECCIÓN: "me llegó una solicitud" = yo soy el ORIGEN (alguien me pidió a mí)
 export const getSolicitudesRecibidas = async () => {
   try {
     const respuestas = await Promise.all(
@@ -233,25 +228,26 @@ export const getSolicitudesRecibidas = async () => {
         try {
           const r = await axios.get(
             `http://${host}/api/${branch}/transferencias`,
-            { timeout: 3000 }
+            { timeout: 3000 },
           );
           return r.data || [];
         } catch {
           console.log(`${branch} no disponible`);
           return [];
         }
-      })
+      }),
     );
 
     const todas = respuestas.flat();
 
-    // ✅ me llegó → yo soy el ORIGEN
     const recibidas = todas.filter(
-      (t) => t.origen?.toLowerCase() === CURRENT_NODE.toLowerCase()
+      (t) => t.origen?.toLowerCase() === CURRENT_NODE.toLowerCase(),
     );
 
     return [
-      ...new Map(recibidas.map((t) => [t.transferencia_id || t.id, t])).values(),
+      ...new Map(
+        recibidas.map((t) => [t.transferencia_id || t.id, t]),
+      ).values(),
     ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   } catch (error) {
     console.error("Error obteniendo solicitudes recibidas:", error);
@@ -274,17 +270,13 @@ export const aprobarSolicitud = async (transferenciaId, origen) => {
 };
 
 // Rechazar solicitud
-export const rechazarSolicitud = async (
-  transferenciaId,
-  origen,
-  motivo
-) => {
+export const rechazarSolicitud = async (transferenciaId, origen, motivo) => {
   try {
     const response = await axios.post(
       `http://${NODES[origen]}/api/${origen}/transferencias/${transferenciaId}/rechazar`,
       {
         motivo,
-      }
+      },
     );
 
     return response.data;

@@ -11,10 +11,6 @@ const HistoryCard = ({
   status,
   isLast,
 }) => {
-
-  // ✅ CORRECCIÓN: el backend guarda created_at sin timezone (sin 'Z' al final)
-  // lo que hace que JS lo interprete como UTC+0 en lugar de hora local del dispositivo.
-  // Agregamos 'Z' solo si el string no trae información de zona horaria ya incluida.
   const formattedDate = (() => {
     if (!date) return "Sin fecha";
     const normalized = /Z$|[+-]\d{2}:\d{2}$/.test(date) ? date : `${date}Z`;
@@ -87,7 +83,9 @@ const HistoryCard = ({
             flexWrap: "wrap",
           }}
         >
-          <Typography sx={{ fontWeight: 700, color: "#171717", fontSize: "18px" }}>
+          <Typography
+            sx={{ fontWeight: 700, color: "#171717", fontSize: "18px" }}
+          >
             {title}
           </Typography>
           {status && (
@@ -96,7 +94,7 @@ const HistoryCard = ({
               size="small"
               sx={{
                 backgroundColor: getStatusStyles().bg,
-                color:           getStatusStyles().text,
+                color: getStatusStyles().text,
                 fontWeight: 600,
                 borderRadius: 2,
                 "& .MuiChip-label": { paddingX: 1.5 },
