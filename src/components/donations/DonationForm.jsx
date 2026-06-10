@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {Dialog,DialogContent,Typography,Box,TextField,Button,MenuItem,Alert,} from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
-import {getCategories,createDonacion,createCategory,} from "../../services/api";
+import {getCategories,createDonacion} from "../../services/api";
 import AddIcon from "@mui/icons-material/Add";
 
 const DonationForm = ({ open, setOpen, onSuccess }) => {

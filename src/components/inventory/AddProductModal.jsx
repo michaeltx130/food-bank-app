@@ -15,7 +15,6 @@ import AddIcon from "@mui/icons-material/Add";
 import {
   createProduct,
   getCategories,
-  createCategory,
 } from "../../services/api";
 
 const AddProductModal = ({ open, handleClose, onProductCreated }) => {
