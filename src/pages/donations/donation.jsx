@@ -3,13 +3,7 @@ import Sidebar from "../../components/layout/Sidebar";
 import DonationStatCard from "../../components/donations/DonationStatCard";
 import DonationHistoryCard from "../../components/donations/DonationHistoryCard";
 import DonationForm from "../../components/donations/DonationForm";
-import {
-  Box,
-  Button,
-  Typography,
-  CircularProgress,
-  Pagination,
-} from "@mui/material";
+import {Box,Button,Typography,CircularProgress,Pagination,} from "@mui/material";
 import CardGiftcardOutlinedIcon from "@mui/icons-material/CardGiftcardOutlined";
 import ApartmentOutlinedIcon from "@mui/icons-material/ApartmentOutlined";
 import { getDonaciones } from "../../services/api";
@@ -89,7 +83,7 @@ const Donation = () => {
               paddingY: 1.5,
             }}
           >
-            + Registrar Donacion
+            + Registrar donacion
           </Button>
         </Box>
 
@@ -115,7 +109,7 @@ const Donation = () => {
           }}
         >
           <Typography variant="h6" fontWeight="bold" mb={3}>
-            Historial de Donaciones
+            Historial de donaciones
           </Typography>
 
           {loading ? (

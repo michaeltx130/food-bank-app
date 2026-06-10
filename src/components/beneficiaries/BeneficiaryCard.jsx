@@ -47,7 +47,7 @@ const BeneficiaryCard = ({ family, onNuevaEntrega }) => {
           onClick={() => onNuevaEntrega(family)}
           sx={{ borderRadius: 3, textTransform: "none", paddingX: 2, marginRight: 1 }}
         >
-          Nueva Entrega
+          Nueva entrega
         </Button>
         <Box onClick={() => setExpanded(!expanded)} sx={{ cursor: "pointer", color: "#6b7280", display: "flex", alignItems: "center" }}>
           {expanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}

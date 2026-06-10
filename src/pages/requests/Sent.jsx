@@ -1,12 +1,7 @@
 import { useState, useEffect } from "react";
 import RequestCard from "../../components/requests/RequestCard";
 import {Box,Button,Typography,Dialog,DialogContent,TextField,MenuItem,Pagination,Skeleton,Card,CardContent,} from "@mui/material";
-
-import {
-  getSolicitudesEnviadas,
-  getBranchProducts,
-  createSolicitud,
-} from "../../services/api";
+import {getSolicitudesEnviadas,getBranchProducts,createSolicitud,} from "../../services/api";
 
 const CURRENT_NODE = import.meta.env.VITE_CURRENT_NODE;
 
@@ -30,87 +25,150 @@ const Sent = ({ open, setOpen }) => {
   const [productoId, setProductoId] = useState("");
   const [cantidad, setCantidad] = useState("");
   const [enviando, setEnviando] = useState(false);
-
+  const [errors, setErrors] = useState({});
 
   const fetchSolicitudes = async (showLoader = true) => {
-  if (showLoader) setLoading(true);
+    if (showLoader) setLoading(true);
 
-  try {
-    const data = await getSolicitudesEnviadas();
-    setSolicitudes(data);
-  } finally {
-    if (showLoader) setLoading(false);
-  }
-};
+    try {
+      const data = await getSolicitudesEnviadas();
+      setSolicitudes(data);
+    } finally {
+      if (showLoader) setLoading(false);
+    }
+  };
 
- useEffect(() => {
-  fetchSolicitudes();
-  const interval = setInterval(() => fetchSolicitudes(false), 10000); // cada 10s
-  return () => clearInterval(interval);
-}, []);
+  useEffect(() => {
+    fetchSolicitudes();
+    const interval = setInterval(() => fetchSolicitudes(false), 10000); // cada 10s
+    return () => clearInterval(interval);
+  }, []);
   const handleSucursalChange = async (e) => {
-  const valor = e.target.value;
+    const valor = e.target.value;
 
-  setSucursal(valor);
-  setProductoId("");
+    setSucursal(valor);
+    setProductoId("");
 
-  setLoadingProductos(true);
+    setLoadingProductos(true);
 
-  try {
-    const data = await getBranchProducts(valor);
+    try {
+      const data = await getBranchProducts(valor);
 
-    setProductosSucursal(data.productos || data);
-  } catch (error) {
-    console.error(error);
-    setProductosSucursal([]);
-  } finally {
-    setLoadingProductos(false);
-  }
-};
+      setProductosSucursal(data.productos || data);
+    } catch (error) {
+      console.error(error);
+      setProductosSucursal([]);
+    } finally {
+      setLoadingProductos(false);
+    }
+  };
+
+  //   const handleEnviar = async () => {
+  //   if (!sucursal || !productoId || !cantidad) return;
+
+  //   setEnviando(true);
+
+  //   try {
+  //     const productoElegido = productosSucursal.find(
+  //       (p) => p.id === Number(productoId)
+  //     );
+
+  //     if (!productoElegido) {
+  //       alert("Producto no encontrado");
+  //       return;
+  //     }
+
+  //     await createSolicitud({
+  //       origen: sucursal,
+  //       producto_nombre: productoElegido.nombre,
+  //       cantidad: Number(cantidad),
+  //     });
+
+  //     setOpen(false);
+  //     setSucursal("");
+  //     setProductoId("");
+  //     setCantidad("");
+
+  //     fetchSolicitudes();
+  //   } catch (e) {
+  //     console.error("Error enviando solicitud:", e);
+  //   } finally {
+  //     setEnviando(false);
+  //   }
+  // };
 
   const handleEnviar = async () => {
-  if (!sucursal || !productoId || !cantidad) return;
+    const newErrors = {};
 
-  setEnviando(true);
+    if (!sucursal) {
+      newErrors.sucursal = "Selecciona una sucursal";
+    }
 
-  try {
+    if (!productoId) {
+      newErrors.producto = "Selecciona un producto";
+    }
+
+    if (!cantidad) {
+      newErrors.cantidad = "Ingresa una cantidad";
+    } else if (Number(cantidad) <= 0) {
+      newErrors.cantidad = "La cantidad debe ser mayor a 0";
+    } else if (!Number.isInteger(Number(cantidad))) {
+      newErrors.cantidad = "Solo se permiten números enteros";
+    }
+
     const productoElegido = productosSucursal.find(
-      (p) => p.id === Number(productoId)
+      (p) => p.id === Number(productoId),
     );
 
-    if (!productoElegido) {
-      alert("Producto no encontrado");
+    if (productoElegido && Number(cantidad) > productoElegido.cantidad) {
+      newErrors.cantidad = `Solo hay ${productoElegido.cantidad} ${productoElegido.unit} disponibles`;
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
-    await createSolicitud({
-      origen: sucursal,
-      producto_nombre: productoElegido.nombre,
-      cantidad: Number(cantidad),
-    });
+    setEnviando(true);
 
-    setOpen(false);
-    setSucursal("");
-    setProductoId("");
-    setCantidad("");
+    try {
+      await createSolicitud({
+        origen: sucursal,
+        producto_nombre: productoElegido.nombre,
+        cantidad: Number(cantidad),
+      });
 
-    fetchSolicitudes();
-  } catch (e) {
-    console.error("Error enviando solicitud:", e);
-  } finally {
-    setEnviando(false);
-  }
-};
+      setOpen(false);
+      setSucursal("");
+      setProductoId("");
+      setCantidad("");
+      setErrors({});
 
-
+      fetchSolicitudes();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setEnviando(false);
+    }
+  };
 
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentSolicitudes = solicitudes.slice(startIndex, startIndex + itemsPerPage);
+  const currentSolicitudes = solicitudes.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
   const totalPages = Math.ceil(solicitudes.length / itemsPerPage);
 
   return (
     <>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 8 }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 3,
+          marginBottom: 8,
+        }}
+      >
         {loading ? (
           [1, 2, 3].map((item) => (
             <Card key={item} sx={{ borderRadius: 4, boxShadow: 2 }}>
@@ -119,7 +177,13 @@ const Sent = ({ open, setOpen }) => {
                 <Box sx={{ mt: 2 }}>
                   <Skeleton width="70%" height={45} />
                 </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mt: 3,
+                  }}
+                >
                   <Skeleton width={120} height={25} />
                   <Skeleton width={180} height={40} />
                 </Box>
@@ -164,7 +228,7 @@ const Sent = ({ open, setOpen }) => {
       >
         <DialogContent sx={{ padding: "40px" }}>
           <Typography variant="h4" fontWeight="bold" mb={1}>
-            Nueva Solicitud
+            Nueva solicitud
           </Typography>
 
           <Typography color="text.secondary" mb={4}>
@@ -178,9 +242,18 @@ const Sent = ({ open, setOpen }) => {
           <TextField
             select
             fullWidth
-            sx={{ marginBottom: 3 }}
             value={sucursal}
-            onChange={handleSucursalChange}
+            onChange={(e) => {
+              handleSucursalChange(e);
+
+              setErrors((prev) => ({
+                ...prev,
+                sucursal: "",
+              }));
+            }}
+            error={!!errors.sucursal}
+            helperText={errors.sucursal}
+            sx={{ marginBottom: 3 }}
           >
             {SUCURSALES.filter((s) => s.key !== CURRENT_NODE).map((s) => (
               <MenuItem key={s.key} value={s.key}>
@@ -199,7 +272,16 @@ const Sent = ({ open, setOpen }) => {
                 select
                 fullWidth
                 value={productoId}
-                onChange={(e) => setProductoId(e.target.value)}
+                onChange={(e) => {
+                  setProductoId(e.target.value);
+
+                  setErrors((prev) => ({
+                    ...prev,
+                    producto: "",
+                  }));
+                }}
+                error={!!errors.producto}
+                helperText={errors.producto}
                 disabled={loadingProductos || !sucursal}
               >
                 {loadingProductos ? (
@@ -223,7 +305,17 @@ const Sent = ({ open, setOpen }) => {
                 type="number"
                 fullWidth
                 value={cantidad}
-                onChange={(e) => setCantidad(e.target.value)}
+                onChange={(e) => {
+                  setCantidad(e.target.value);
+
+                  setErrors((prev) => ({
+                    ...prev,
+                    cantidad: "",
+                  }));
+                }}
+                error={!!errors.cantidad}
+                helperText={errors.cantidad}
+                inputProps={{ min: 1 }}
               />
             </Box>
           </Box>

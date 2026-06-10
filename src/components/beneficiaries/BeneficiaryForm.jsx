@@ -1,14 +1,5 @@
 import { useState } from "react";
-import {
-  Box,
-  Button,
-  Typography,
-  Dialog,
-  DialogContent,
-  TextField,
-  CircularProgress,
-  Alert,
-} from "@mui/material";
+import {Box,Button,Typography,Dialog,DialogContent,TextField,CircularProgress,Alert,} from "@mui/material";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import { createFamilia } from "../../services/api";
 
@@ -84,7 +75,7 @@ const BeneficiaryForm = ({ open, setOpen, onSuccess }) => {
     >
       <DialogContent sx={{ padding: "40px" }}>
         <Typography variant="h5" fontWeight="bold" mb={3}>
-          Registrar Nueva Familia
+          Registrar nueva familia
         </Typography>
 
         {error && (
@@ -96,9 +87,9 @@ const BeneficiaryForm = ({ open, setOpen, onSuccess }) => {
         <Typography
           variant="caption"
           color="text.secondary"
-          sx={{ textTransform: "uppercase", letterSpacing: 1 }}
+          sx={{ letterSpacing: 1 ,fontSize:"15px" }}
         >
-          Nombre de la Familia
+          Nombre de la familia
         </Typography>
         <TextField
           fullWidth
@@ -112,9 +103,9 @@ const BeneficiaryForm = ({ open, setOpen, onSuccess }) => {
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ textTransform: "uppercase", letterSpacing: 1 }}
+              sx={{ letterSpacing: 1,fontSize:"15px" }}
             >
-              Número de Teléfono
+              Número de teléfono
             </Typography>
             <TextField
               fullWidth
@@ -132,9 +123,9 @@ const BeneficiaryForm = ({ open, setOpen, onSuccess }) => {
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ textTransform: "uppercase", letterSpacing: 1 }}
+              sx={{ letterSpacing: 1,fontSize:"15px" }}
             >
-              Cantidad de Miembros
+              Cantidad de miembros
             </Typography>
             <TextField
               type="number"
@@ -152,7 +143,7 @@ const BeneficiaryForm = ({ open, setOpen, onSuccess }) => {
         <Typography
           variant="caption"
           color="text.secondary"
-          sx={{ textTransform: "uppercase", letterSpacing: 1 }}
+          sx={{ letterSpacing: 1 ,fontSize:"15px" }}
         >
           Dirección / Ubicación
         </Typography>
@@ -160,7 +151,7 @@ const BeneficiaryForm = ({ open, setOpen, onSuccess }) => {
           fullWidth
           value={direccion}
           onChange={(e) => setDireccion(e.target.value)}
-          sx={{ marginBottom: 4, marginTop: 1 }}
+          sx={{ marginBottom: 4, marginTop: 1 ,fontSize:"15px"}}
           InputProps={{
             startAdornment: (
               <LocationOnOutlinedIcon

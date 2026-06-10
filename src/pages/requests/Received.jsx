@@ -1,22 +1,7 @@
 import { useEffect, useState } from "react";
 import RequestCard from "../../components/requests/RequestCard";
-import {
-  Box,
-  Typography,
-  Pagination,
-  Skeleton,
-  Card,
-  CardContent,
-  Dialog,
-  DialogContent,
-  TextField,
-  Button,
-} from "@mui/material";
-import {
-  getSolicitudesRecibidas,
-  aprobarSolicitud,
-  rechazarSolicitud,
-} from "../../services/api";
+import {Box,Typography,Pagination,Skeleton,Card,CardContent,Dialog,DialogContent,TextField,Button,} from "@mui/material";
+import {getSolicitudesRecibidas,aprobarSolicitud,rechazarSolicitud,} from "../../services/api";
 
 const Received = () => {
   const [solicitudes, setSolicitudes] = useState([]);

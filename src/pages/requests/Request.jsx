@@ -94,7 +94,7 @@ const Request = () => {
               onClick={() => setOpen(true)}
               sx={{ borderRadius: 3, textTransform: "none", paddingX: 3 }}
             >
-              + Nueva Solicitud
+              + Nueva solicitud
             </Button>
           )}
         </Box>

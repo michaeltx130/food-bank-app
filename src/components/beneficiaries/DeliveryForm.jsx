@@ -1,16 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  Box,
-  Button,
-  Typography,
-  Dialog,
-  DialogContent,
-  TextField,
-  MenuItem,
-  IconButton,
-  CircularProgress,
-  Alert,
-} from "@mui/material";
+import {Box,Button,Typography,Dialog,DialogContent,TextField,MenuItem,IconButton,CircularProgress,Alert,} from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import { getProducts, createEntrega } from "../../services/api";
@@ -140,7 +129,7 @@ const DeliveryForm = ({ open, setOpen, family, onSuccess }) => {
     >
       <DialogContent sx={{ padding: "40px", marginBottom: 2 }}>
         <Typography variant="h5" fontWeight="bold" mb={0.5}>
-          Nueva Entrega
+          Nueva entrega
         </Typography>
         <Typography color="text.secondary" fontSize="14px" mb={3}>
           {family?.name}
@@ -161,8 +150,7 @@ const DeliveryForm = ({ open, setOpen, family, onSuccess }) => {
           variant="caption"
           color="text.secondary"
           sx={{
-            textTransform: "uppercase",
-            letterSpacing: 1,
+            letterSpacing: 1,fontSize:"15px"
           }}
         >
           Fecha de entrega
@@ -178,7 +166,7 @@ const DeliveryForm = ({ open, setOpen, family, onSuccess }) => {
         <Typography
           variant="caption"
           color="text.secondary"
-          sx={{ textTransform: "uppercase", letterSpacing: 1 }}
+          sx={{ letterSpacing: 1 ,fontSize:"15px" }}
         >
           Productos
         </Typography>
@@ -319,7 +307,7 @@ const DeliveryForm = ({ open, setOpen, family, onSuccess }) => {
             {loading ? (
               <CircularProgress size={22} color="inherit" />
             ) : (
-              "Registrar Entrega"
+              "Registrar entrega"
             )}
           </Button>
         </Box>

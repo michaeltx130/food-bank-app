@@ -1,20 +1,7 @@
 import { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  Typography,
-  Box,
-  TextField,
-  Button,
-  MenuItem,
-  Alert,
-} from "@mui/material";
+import {Dialog,DialogContent,Typography,Box,TextField,Button,MenuItem,Alert,} from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
-import {
-  getCategories,
-  createDonacion,
-  createCategory,
-} from "../../services/api";
+import {getCategories,createDonacion,createCategory,} from "../../services/api";
 import AddIcon from "@mui/icons-material/Add";
 
 const DonationForm = ({ open, setOpen, onSuccess }) => {
@@ -26,6 +13,7 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
   const [newCategory, setNewCategory] = useState("");
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [categoryError, setCategoryError] = useState("");
+  const [errors, setErrors] = useState({});
 
   const [form, setForm] = useState({
     donante_nombre: "",
@@ -62,53 +50,60 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
   };
 
   const handleSubmit = async () => {
-    if (loading) return;
+  if (loading) return;
 
-    if (!form.donante_nombre.trim()) {
-      return setError("El nombre del donante es requerido.");
-    }
+  const newErrors = {};
 
-    if (!form.producto_nombre.trim()) {
-      return setError("El nombre del producto es requerido.");
-    }
+  if (!form.donante_nombre.trim()) {
+    newErrors.donante_nombre = "Ingresa el nombre del donante";
+  }
 
-    if (!form.cantidad) {
-      return setError("La cantidad es obligatoria.");
-    }
+  if (!form.producto_nombre.trim()) {
+    newErrors.producto_nombre = "Ingresa el nombre del producto";
+  }
 
-    if (Number(form.cantidad) <= 0) {
-      return setError("La cantidad debe ser mayor a 0.");
-    }
+  if (!form.cantidad) {
+    newErrors.cantidad = "Ingresa una cantidad";
+  } else if (Number(form.cantidad) <= 0) {
+    newErrors.cantidad = "Debe ser mayor a 0";
+  } else if (!Number.isInteger(Number(form.cantidad))) {
+    newErrors.cantidad = "Solo números enteros";
+  }
 
-    if (!Number.isInteger(Number(form.cantidad))) {
-      return setError("La cantidad debe ser un número entero.");
-    }
+  if (!form.unit) {
+    newErrors.unit = "Selecciona una unidad";
+  }
 
-    if (!form.unit) {
-      return setError("Selecciona una unidad.");
-    }
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    setError("Corrige los campos marcados.");
+    return;
+  }
 
-    setLoading(true);
-    setError(null);
+  setErrors({});
+  setLoading(true);
+  setError(null);
 
-    try {
-      await createDonacion({
-        donante: form.donante_nombre.trim(),
-        producto: form.producto_nombre.trim(),
-        cantidad: Number(form.cantidad),
-        unit: form.unit,
-        categoria_id: form.categoria_id ? Number(form.categoria_id) : null,
-      });
+  try {
+    await createDonacion({
+      donante: form.donante_nombre.trim(),
+      producto: form.producto_nombre.trim(),
+      cantidad: Number(form.cantidad),
+      unit: form.unit,
+      categoria_id: form.categoria_id
+        ? Number(form.categoria_id)
+        : null,
+    });
 
-      setSuccess(true);
-      onSuccess?.();
-      setTimeout(handleClose, 1200);
-    } catch {
-      setError("Error al registrar la donación. Intenta de nuevo.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    setSuccess(true);
+    onSuccess?.();
+    setTimeout(handleClose, 1200);
+  } catch {
+    setError("Error al registrar la donación.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCreateCategory = async () => {
     if (!newCategory.trim()) {
@@ -153,7 +148,7 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
             variant="h4"
             sx={{ fontWeight: "bold", color: "#171717", marginBottom: 4 }}
           >
-            Registrar Donación
+            Registrar donación
           </Typography>
 
           {error && (
@@ -168,24 +163,40 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
           )}
 
           <TextField
-            fullWidth
-            label="Donante"
-            placeholder="Nombre del donante"
-            name="donante_nombre"
-            value={form.donante_nombre}
-            onChange={handleChange}
-            sx={{ marginBottom: 3 }}
-          />
+  fullWidth
+  label="Donante"
+  name="donante_nombre"
+  value={form.donante_nombre}
+  onChange={(e) => {
+    handleChange(e);
 
-          <TextField
-            fullWidth
-            label="Producto"
-            placeholder="Alimento/producto"
-            name="producto_nombre"
-            value={form.producto_nombre}
-            onChange={handleChange}
-            sx={{ marginBottom: 3 }}
-          />
+    setErrors((prev) => ({
+      ...prev,
+      donante_nombre: "",
+    }));
+  }}
+  error={!!errors.donante_nombre}
+  helperText={errors.donante_nombre}
+  sx={{ marginBottom: 3 }}
+/>
+<TextField
+  fullWidth
+  label="Producto"
+  placeholder="Alimento/producto"
+  name="producto_nombre"
+  value={form.producto_nombre}
+  onChange={(e) => {
+    handleChange(e);
+
+    setErrors((prev) => ({
+      ...prev,
+      producto_nombre: "",
+    }));
+  }}
+  error={!!errors.producto_nombre}
+  helperText={errors.producto_nombre}
+  sx={{ marginBottom: 3 }}
+/>
 
           <Box
             sx={{
@@ -194,21 +205,7 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
               marginBottom: 1,
             }}
           >
-            <Button
-              startIcon={<AddIcon />}
-              onClick={() => setCategoryModalOpen(true)}
-              sx={{
-                textTransform: "none",
-                color: "#E07A2F",
-                padding: 0,
-                "&:hover": {
-                  backgroundColor: "transparent",
-                  textDecoration: "underline",
-                },
-              }}
-            >
-              Agregar categoría
-            </Button>
+            
           </Box>
 
           <TextField
@@ -236,29 +233,47 @@ const DonationForm = ({ open, setOpen, onSuccess }) => {
               marginBottom: 4,
             }}
           >
-            <TextField
-              fullWidth
-              label="Cantidad"
-              type="number"
-              name="cantidad"
-              value={form.cantidad}
-              onChange={handleChange}
-              inputProps={{ min: 0 }}
-            />
-            <TextField
-              fullWidth
-              select
-              label="Unidad"
-              name="unit"
-              value={form.unit}
-              onChange={handleChange}
-            >
-              <MenuItem value="pz">Pz</MenuItem>
-              <MenuItem value="kg">Kg</MenuItem>
-              <MenuItem value="gr">Gramos</MenuItem>
-              <MenuItem value="L">Litros</MenuItem>
-              <MenuItem value="ml">Mililitros</MenuItem>
-            </TextField>
+           <TextField
+  fullWidth
+  label="Cantidad"
+  type="number"
+  name="cantidad"
+  value={form.cantidad}
+  onChange={(e) => {
+    handleChange(e);
+
+    setErrors((prev) => ({
+      ...prev,
+      cantidad: "",
+    }));
+  }}
+  error={!!errors.cantidad}
+  helperText={errors.cantidad}
+  inputProps={{ min: 1 }}
+/>
+           <TextField
+  fullWidth
+  select
+  label="Unidad"
+  name="unit"
+  value={form.unit}
+  onChange={(e) => {
+    handleChange(e);
+
+    setErrors((prev) => ({
+      ...prev,
+      unit: "",
+    }));
+  }}
+  error={!!errors.unit}
+  helperText={errors.unit}
+>
+  <MenuItem value="pz">Pz</MenuItem>
+  <MenuItem value="kg">Kg</MenuItem>
+  <MenuItem value="gr">Gramos</MenuItem>
+  <MenuItem value="L">Litros</MenuItem>
+  <MenuItem value="ml">Mililitros</MenuItem>
+</TextField>
           </Box>
 
           <Box sx={{ display: "flex", gap: 2 }}>

@@ -107,7 +107,7 @@ const totalPages =
               marginTop: 1,
             }}
           >
-            + Registrar Familia
+            + Registrar familia
           </Button>
         </Box>
 

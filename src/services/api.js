@@ -174,14 +174,7 @@ export const requestProduct = async (
   }
 };
 
-// Crear categoría
-export const createCategory = async (nombre) => {
-  const response = await api.post(`/api/${CURRENT_NODE}/categorias`, {
-    nombre,
-  });
 
-  return response.data;
-};
 
 // Crear solicitud / transferencia
 export const createSolicitud = async ({
@@ -323,3 +316,16 @@ export const getTransferencias = async () => {
     return [];
   }
 };
+
+export const getResumenNotificaciones = async () => {
+  try {
+    const response = await api.get("/api/notificaciones/resumen");
+    return response.data;
+  } catch (error) {
+    console.error("Error obteniendo notificaciones:", error);
+    return {
+      no_leidas: 0,
+    };
+  }
+};
+

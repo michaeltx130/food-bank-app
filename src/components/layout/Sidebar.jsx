@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import logo from "../../assets/logo.jpeg";
+import Badge from "@mui/material/Badge";
+import { getResumenNotificaciones } from "../../services/api";
 
 import {
   Drawer,
@@ -27,6 +29,7 @@ import {
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [notificaciones, setNotificaciones] = useState(0);
 
   const CURRENT_NODE = import.meta.env.VITE_CURRENT_NODE;
   const branchNames = {
@@ -38,13 +41,34 @@ const Sidebar = () => {
 
   const currentBranch = branchNames[CURRENT_NODE] || "Sucursal";
 
+  useEffect(() => {
+    const cargarNotificaciones = async () => {
+      try {
+        const data = await getResumenNotificaciones();
+        setNotificaciones(data.no_leidas || 0);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    cargarNotificaciones();
+
+    const interval = setInterval(cargarNotificaciones, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const menuItems = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/" },
     { text: "Inventario", icon: <InventoryIcon />, path: "/inventory" },
     { text: "Red de Inventarios", icon: <NetworkIcon />, path: "/network" },
     { text: "Solicitudes", icon: <RequestIcon />, path: "/requests" },
     { text: "Donaciones", icon: <DonationIcon />, path: "/donations" },
-    { text: "Beneficiarios", icon: <BeneficiaryIcon />, path: "/beneficiaries" },
+    {
+      text: "Beneficiarios",
+      icon: <BeneficiaryIcon />,
+      path: "/beneficiaries",
+    },
     { text: "Historial", icon: <HistoryIcon />, path: "/history" },
   ];
 
@@ -55,7 +79,6 @@ const Sidebar = () => {
         width: 260,
         flexShrink: 0,
         "& .MuiDrawer-paper": {
-          
           width: 260,
           boxSizing: "border-box",
           backgroundColor: "#16a34a",
@@ -63,7 +86,7 @@ const Sidebar = () => {
           border: "none",
           overflow: "hidden",
           borderRadius: "1px",
-         
+
           boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
         },
       }}
@@ -121,8 +144,19 @@ const Sidebar = () => {
                 },
               }}
             >
-              <ListItemIcon sx={{ color: "#ffffff", minWidth: 40 }}>
-                {item.icon}
+              <ListItemIcon
+                sx={{
+                  color: "#ffffff",
+                  minWidth: 40,
+                }}
+              >
+                {item.text === "Solicitudes" ? (
+                  <Badge badgeContent={notificaciones} color="error" max={99}>
+                    {item.icon}
+                  </Badge>
+                ) : (
+                  item.icon
+                )}
               </ListItemIcon>
               <ListItemText primary={item.text} />
             </ListItemButton>
@@ -158,7 +192,6 @@ const Sidebar = () => {
             <ListItemText primary="Cambiar sucursal" />
           </ListItemButton>
         </Box> */}
-
       </Box>
     </Drawer>
   );

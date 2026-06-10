@@ -11,7 +11,12 @@ import {
   Alert,
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
-import { createProduct, getCategories } from "../../services/api";
+import AddIcon from "@mui/icons-material/Add";
+import {
+  createProduct,
+  getCategories,
+  createCategory,
+} from "../../services/api";
 
 const AddProductModal = ({ open, handleClose, onProductCreated }) => {
   const [name, setName] = useState("");
@@ -22,6 +27,10 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [newCategory, setNewCategory] = useState("");
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [categoryError, setCategoryError] = useState("");
   const submitLock = useRef(false);
 
   useEffect(() => {
@@ -49,6 +58,10 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
 
     setErrors({});
     setSuccess(false);
+
+    setNewCategory("");
+    setCategoryError("");
+    setCategoryModalOpen(false);
   };
 
   const handleModalClose = () => {
@@ -120,6 +133,31 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
       setLoading(false);
     }
   };
+  const handleCreateCategory = async () => {
+    if (!newCategory.trim()) {
+      setCategoryError("Ingresa un nombre");
+      return;
+    }
+
+    try {
+      setCategoryLoading(true);
+      setCategoryError("");
+
+      const category = await createCategory(newCategory.trim());
+
+      setCategories((prev) => [...prev, category]);
+
+      setCategoryId(category.id);
+
+      setNewCategory("");
+      setCategoryModalOpen(false);
+    } catch (error) {
+      console.error(error);
+      setCategoryError("Error creando categoría");
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
 
   return (
     <>
@@ -144,7 +182,7 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
               marginBottom: 4,
             }}
           >
-            Agregar producto
+            Agregar Producto
           </Typography>
 
           {success && (
@@ -171,6 +209,32 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
             helperText={errors.name}
             sx={{ marginBottom: 3 }}
           />
+
+          {/* Agregar categoría */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginBottom: 1,
+            }}
+          >
+            <Button
+              startIcon={<AddIcon />}
+              onClick={() => setCategoryModalOpen(true)}
+              sx={{
+                textTransform: "none",
+                color: "#E07A2F",
+                padding: 0,
+
+                "&:hover": {
+                  backgroundColor: "transparent",
+                  textDecoration: "underline",
+                },
+              }}
+            >
+              Agregar categoría
+            </Button>
+          </Box>
 
           {/* Categoría */}
           <TextField
@@ -287,6 +351,86 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
               }}
             >
               Agregar producto
+            </LoadingButton>
+          </Box>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Nueva Categoría */}
+      <Dialog
+        open={categoryModalOpen}
+        onClose={() => {
+          setCategoryModalOpen(false);
+          setNewCategory("");
+          setCategoryError("");
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogContent>
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: "bold",
+              mb: 3,
+            }}
+          >
+            Nueva categoría
+          </Typography>
+
+          <TextField
+            fullWidth
+            label="Nombre"
+            value={newCategory}
+            onChange={(e) => {
+              setNewCategory(e.target.value);
+              setCategoryError("");
+            }}
+            error={!!categoryError}
+            helperText={categoryError}
+            sx={{ mb: 3 }}
+          />
+
+          <Box
+            sx={{
+              display: "flex",
+              gap: 2,
+            }}
+          >
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={() => {
+                setCategoryModalOpen(false);
+                setNewCategory("");
+                setCategoryError("");
+              }}
+              sx={{
+                borderRadius: "16px",
+                paddingY: 1.5,
+                textTransform: "none",
+              }}
+            >
+              Cancelar
+            </Button>
+
+            <LoadingButton
+              fullWidth
+              loading={categoryLoading}
+              onClick={handleCreateCategory}
+              variant="contained"
+              sx={{
+                borderRadius: "16px",
+                paddingY: 1.5,
+                textTransform: "none",
+                backgroundColor: "#F97316",
+
+                "&:hover": {
+                  backgroundColor: "#EA580C",
+                },
+              }}
+            >
+              Agregar categoría
             </LoadingButton>
           </Box>
         </DialogContent>
