@@ -30,10 +30,24 @@ export const getBranchProducts = async (branch) => {
   try {
     const response = await axios.get(
       `http://${NODES[branch]}/api/${branch}/productos`,
+      {
+        timeout: 3000,
+      },
     );
     return response.data;
   } catch (error) {
     console.error(`Error obteniendo productos de ${branch}:`, error);
+    return [];
+  }
+};
+
+export const getReplicaProducts = async () => {
+  try {
+    const response = await api.get("/api/red/productos/replica");
+
+    return response.data.productos_red || [];
+  } catch (error) {
+    console.error("Error obteniendo réplicas:", error);
     return [];
   }
 };

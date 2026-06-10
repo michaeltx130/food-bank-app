@@ -7,12 +7,13 @@ import {
   Pagination,
   CircularProgress,
 } from "@mui/material";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
 import Sidebar from "../components/layout/Sidebar";
 import SearchBar from "../components/inventory/SearchBar";
 import InventoryTable from "../components/inventory/InventoryTable";
 import BranchSelector from "../components/network/BranchSelector";
-import { getBranchProducts } from "../services/api";
+import { getBranchProducts, getReplicaProducts } from "../services/api";
 
 const NetworkInventory = () => {
   const CURRENT_NODE = import.meta.env.VITE_CURRENT_NODE;
@@ -30,17 +31,12 @@ const NetworkInventory = () => {
   );
 
   const [selectedBranchId, setSelectedBranchId] = useState("");
-
   const [branchProducts, setBranchProducts] = useState([]);
-
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState("");
-
+  const [isReplica, setIsReplica] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-
   const [page, setPage] = useState(1);
-
   const productsPerPage = 5;
 
   useEffect(() => {
@@ -60,21 +56,61 @@ const NetworkInventory = () => {
     try {
       setLoading(true);
       setError("");
+      setIsReplica(false);
 
       const data = await getBranchProducts(selectedBranchData.key);
 
-      const formattedProducts = data.map((product) => ({
-        id: product.id,
-        name: product.nombre ?? "Sin nombre",
-        category: product.categoria?.nombre || "Sin categoría",
-        quantity: product.cantidad,
-        unit: product.unit,
-      }));
+      if (data && data.length > 0) {
+        const formattedProducts = data.map((product) => ({
+          id: product.id,
+          name: product.nombre ?? "Sin nombre",
+          category: product.categoria?.nombre || "Sin categoría",
+          quantity: product.cantidad,
+          unit: product.unit,
+        }));
 
-      setBranchProducts(formattedProducts);
+        setBranchProducts(formattedProducts);
+
+        return;
+      }
+
+      throw new Error("Nodo sin respuesta");
     } catch (err) {
-      console.error(err);
-      setError("Error cargando productos");
+      console.warn("Nodo no disponible. Usando réplica.");
+
+      try {
+        const replicas = await getReplicaProducts();
+
+        const productosReplica = replicas.filter(
+          (p) =>
+            p.banco_origen?.toLowerCase() ===
+            selectedBranchData.key.toLowerCase(),
+        );
+
+        const formattedReplica = productosReplica.map((product) => ({
+          id: product.id_producto,
+          name: product.nombre,
+          category:
+            {
+              1: "Granos",
+              2: "Enlatados",
+              3: "Líquidos",
+              4: "Abarrotes",
+              5: "Frutas y verduras",
+              6: "Legumbres",
+              7: "Congelados",
+              8: "Carnes",
+              9: "Higiene",
+            }[product.categoria_id] || "Sin categoría",
+          isReplica: true,
+        }));
+
+        setBranchProducts(formattedReplica);
+        setIsReplica(true);
+      } catch (e) {
+        setBranchProducts([]);
+        setError("No fue posible obtener inventario ni réplica.");
+      }
     } finally {
       setLoading(false);
     }
@@ -88,7 +124,7 @@ const NetworkInventory = () => {
     () =>
       branchProducts.filter(
         (product) =>
-          product.quantity > 0 &&
+          (isReplica || product.quantity > 0) &&
           (product.name ?? "").toLowerCase().includes(searchTerm.toLowerCase()),
       ),
     [branchProducts, searchTerm],
@@ -169,6 +205,43 @@ const NetworkInventory = () => {
             }}
           />
         </Box>
+        {isReplica && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+
+              mb: 2,
+              px: 2,
+              py: 1.2,
+
+              borderRadius: "10px",
+
+              backgroundColor: "#FFFBEB",
+              border: "1px solid #FDE68A",
+
+              color: "#92400E",
+            }}
+          >
+            <WarningAmberIcon
+              sx={{
+                fontSize: 22,
+              }}
+            />
+
+            <Typography
+              sx={{
+                fontSize: "14px",
+                fontWeight: 500,
+                lineHeight: 1.4,
+              }}
+            >
+              Mostrando datos replicados. La sucursal seleccionada no está
+              disponible.
+            </Typography>
+          </Box>
+        )}
 
         {/* Tabla */}
         <Paper
@@ -187,7 +260,9 @@ const NetworkInventory = () => {
               color: "#171717",
             }}
           >
-            Productos Totales ({filteredProducts.length})
+            {isReplica
+              ? `Productos Replicados (${filteredProducts.length})`
+              : `Productos Totales (${filteredProducts.length})`}
           </Typography>
 
           {loading ? (
@@ -214,6 +289,7 @@ const NetworkInventory = () => {
               <InventoryTable
                 products={paginatedProducts}
                 branchName={selectedBranchData?.branchName}
+                isReplica={isReplica}
               />
 
               {totalPages > 1 && (

@@ -1,15 +1,10 @@
 import React from "react";
 
-import {
-  TableRow,
-  TableCell,
-  Box,
-  Typography,
-} from "@mui/material";
+import { TableRow, TableCell, Box, Typography } from "@mui/material";
 
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 
-const InventoryRow = ({ product }) => {
+const InventoryRow = ({ product, isReplica = false }) => {
   return (
     <TableRow
       hover
@@ -53,40 +48,38 @@ const InventoryRow = ({ product }) => {
         </Box>
       </TableCell>
 
-      <TableCell>
-        {product.id}
-      </TableCell>
+      <TableCell>{product.id}</TableCell>
 
-      <TableCell>
-        {product.category}
-      </TableCell>
+      <TableCell>{product.category}</TableCell>
 
-      <TableCell>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-          }}
-        >
-          <Typography
+      {!isReplica && (
+        <TableCell>
+          <Box
             sx={{
-              fontWeight: 700,
-              color: "#171717",
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
             }}
           >
-            {product.quantity}
-          </Typography>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                color: "#171717",
+              }}
+            >
+              {product.quantity}
+            </Typography>
 
-          <Typography
-            sx={{
-              color: "#737373",
-            }}
-          >
-            {product.unit}
-          </Typography>
-        </Box>
-      </TableCell>
+            <Typography
+              sx={{
+                color: "#737373",
+              }}
+            >
+              {product.unit}
+            </Typography>
+          </Box>
+        </TableCell>
+      )}
     </TableRow>
   );
 };

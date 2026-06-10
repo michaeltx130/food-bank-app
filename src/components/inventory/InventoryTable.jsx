@@ -11,9 +11,7 @@ import {
 
 import InventoryRow from "./InventoryRow";
 
-const InventoryTable = ({
-  products = [],
-}) => {
+const InventoryTable = ({ products = [], isReplica = false }) => {
   return (
     <TableContainer>
       <Table
@@ -50,14 +48,16 @@ const InventoryTable = ({
               Categoría
             </TableCell>
 
-            <TableCell
-              sx={{
-                fontWeight: 700,
-                color: "#737373",
-              }}
-            >
-              Cantidad
-            </TableCell>
+            {!isReplica && (
+              <TableCell
+                sx={{
+                  fontWeight: 700,
+                  color: "#737373",
+                }}
+              >
+                Cantidad
+              </TableCell>
+            )}
           </TableRow>
         </TableHead>
 
@@ -65,7 +65,7 @@ const InventoryTable = ({
           {products.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={4}
+                colSpan={isReplica ? 3 : 4}
                 align="center"
                 sx={{
                   paddingY: 6,
@@ -82,6 +82,7 @@ const InventoryTable = ({
               <InventoryRow
                 key={product.id}
                 product={product}
+                isReplica={isReplica}
               />
             ))
           )}
