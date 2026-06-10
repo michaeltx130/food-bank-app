@@ -1,13 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 
-import {
-  Box,
-  Typography,
-  Button,
-  Paper,
-  Pagination,
-  CircularProgress,
-} from "@mui/material";
+import { Box, Typography, Button, Paper, Pagination } from "@mui/material";
 
 import AddIcon from "@mui/icons-material/Add";
 import Sidebar from "../components/layout/Sidebar";
@@ -84,21 +77,6 @@ const Inventory = () => {
     setProducts((prev) => [newProduct, ...prev]);
   };
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   if (error) {
     return (
       <Box
@@ -165,7 +143,7 @@ const Inventory = () => {
               },
             }}
           >
-            Agregar Producto
+            Agregar producto
           </Button>
         </Box>
         {/* Buscador */}
@@ -201,10 +179,10 @@ const Inventory = () => {
               color: "#171717",
             }}
           >
-            Productos Totales ({filteredProducts.length})
+            Productos totales ({filteredProducts.length})
           </Typography>
 
-          <InventoryTable products={currentProducts} />
+          <InventoryTable products={currentProducts} loading={loading} />
 
           {totalPages > 1 && (
             <Box

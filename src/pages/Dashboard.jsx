@@ -18,15 +18,10 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchDashboardData = async () => {
       try {
-        setLoading(true);
         const [productsData, familiasData, solicitudesData] = await Promise.all(
-          [
-            getProducts(),
-            getBeneficiarios(),
-            getSolicitudesRecibidas(),
-          ],
+          [getProducts(), getBeneficiarios(), getSolicitudesRecibidas()],
         );
 
         setProducts(productsData);
@@ -34,22 +29,31 @@ const Dashboard = () => {
         setSolicitudes(solicitudesData);
       } catch (error) {
         console.error(error);
-      } finally {
-        setLoading(false);
       }
     };
-    fetchProducts();
+
+    setLoading(true);
+
+    fetchDashboardData().finally(() => {
+      setLoading(false);
+    });
+
+    const interval = setInterval(() => {
+      fetchDashboardData();
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const stockBajo = products.filter((p) => p.cantidad > 0 && p.cantidad <= 10);
 
-const solicitudesPendientes = solicitudes.filter(
-  (s) => s.aprobacion === "en_espera"
-);
- const totalSolicitudes = solicitudes.length;
+  const solicitudesPendientes = solicitudes.filter(
+    (s) => s.aprobacion === "en_espera",
+  );
+
   const stats = [
     {
-      title: "Productos en Stock",
+      title: "Productos en stock",
       value: loading ? "..." : products.filter((p) => p.cantidad > 0).length,
       description: "productos totales",
       icon: <Inventory2 />,
@@ -58,7 +62,7 @@ const solicitudesPendientes = solicitudes.filter(
     },
 
     {
-      title: "Familias Registradas",
+      title: "Familias registradas",
       value: loading ? "..." : familias.length,
       description: "beneficiarios registrados",
       icon: <People />,
@@ -67,8 +71,8 @@ const solicitudesPendientes = solicitudes.filter(
     },
 
     {
-      title: "Solicitudes Recibidas",
-      value: loading ? "..." : totalSolicitudes,
+      title: "Solicitudes recibidas",
+      value: loading ? "..." : solicitudesPendientes.length,
       description: "pendientes de respuesta",
       icon: <Mail />,
       iconBg: "#FFF7ED",
@@ -76,7 +80,7 @@ const solicitudesPendientes = solicitudes.filter(
     },
 
     {
-      title: "Stock Bajo",
+      title: "Stock bajo",
       value: loading ? "..." : stockBajo.length,
       description: "productos por reabastecer",
       icon: <Warning />,
@@ -147,7 +151,7 @@ const solicitudesPendientes = solicitudes.filter(
         >
           {/*Paneles de Stock Bajo y Solicitudes por responder*/}
           <InfoPanel
-            title={`Productos con Stock Bajo (${stockBajo.length})`}
+            title={`Productos con stock bajo (${stockBajo.length})`}
             icon={<Warning sx={{ color: "#E11D48" }} />}
             maxHeight={220}
           >
@@ -195,7 +199,7 @@ const solicitudesPendientes = solicitudes.filter(
           </InfoPanel>
 
           <InfoPanel
-            title={`Solicitudes por Responder (${solicitudesPendientes.length})`}
+            title={`Solicitudes por responder (${solicitudesPendientes.length})`}
             icon={
               <Mail
                 sx={{
@@ -212,46 +216,42 @@ const solicitudesPendientes = solicitudes.filter(
             ) : (
               <>
                 {solicitudesPendientes.map((s) => (
-  <Box
-    key={s.id}
-    sx={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      py: 1,
-      borderBottom: "1px solid #f3f4f6",
-    }}
-  >
-    <Box>
-      <Typography fontWeight={600}>
-        {s.producto_nombre}
-      </Typography>
+                  <Box
+                    key={s.id}
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      py: 1,
+                      borderBottom: "1px solid #f3f4f6",
+                    }}
+                  >
+                    <Box>
+                      <Typography fontWeight={600}>
+                        {s.producto_nombre}
+                      </Typography>
 
-      <Typography
-        variant="caption"
-        color="text.secondary"
-      >
-        {s.cantidad} {s.producto?.unit || "pz"}
-      </Typography>
-    </Box>
+                      <Typography variant="caption" color="text.secondary">
+                        {s.cantidad} {s.producto?.unit || "pz"}
+                      </Typography>
+                    </Box>
 
-    <Box
-      sx={{
-        backgroundColor: "#f3f4f6",
-        px: 1.2,
-        py: 0.3,
-        borderRadius: 2,
-        fontSize: "12px",
-        color: "#6b7280",
-        fontWeight: 600,
-        textTransform: "capitalize",
-      }}
-    >
-      {s.destino}
-    </Box>
-  </Box>
-))}
-               
+                    <Box
+                      sx={{
+                        backgroundColor: "#f3f4f6",
+                        px: 1.2,
+                        py: 0.3,
+                        borderRadius: 2,
+                        fontSize: "12px",
+                        color: "#6b7280",
+                        fontWeight: 600,
+                        textTransform: "capitalize",
+                      }}
+                    >
+                      {s.destino}
+                    </Box>
+                  </Box>
+                ))}
               </>
             )}
           </InfoPanel>

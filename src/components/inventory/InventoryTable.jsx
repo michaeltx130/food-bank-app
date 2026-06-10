@@ -7,11 +7,17 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Skeleton,
+  Box,
 } from "@mui/material";
 
 import InventoryRow from "./InventoryRow";
 
-const InventoryTable = ({ products = [], isReplica = false }) => {
+const InventoryTable = ({
+  products = [],
+  isReplica = false,
+  loading = false,
+}) => {
   return (
     <TableContainer>
       <Table
@@ -62,7 +68,39 @@ const InventoryTable = ({ products = [], isReplica = false }) => {
         </TableHead>
 
         <TableBody>
-          {products.length === 0 ? (
+          {loading ? (
+            [...Array(5)].map((_, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                    }}
+                  >
+                    <Skeleton variant="rounded" width={38} height={38} />
+
+                    <Skeleton width={120} height={24} />
+                  </Box>
+                </TableCell>
+
+                <TableCell>
+                  <Skeleton width={50} />
+                </TableCell>
+
+                <TableCell>
+                  <Skeleton width={100} />
+                </TableCell>
+
+                {!isReplica && (
+                  <TableCell>
+                    <Skeleton width={70} />
+                  </TableCell>
+                )}
+              </TableRow>
+            ))
+          ) : products.length === 0 ? (
             <TableRow>
               <TableCell
                 colSpan={isReplica ? 3 : 4}

@@ -27,17 +27,24 @@ function RequestCard({
   const estadoActual = aprobacion || estado;
 
   const estadoColor = {
-    aceptado:          { bg: "#dcfce7", text: "#16a34a" },
-    denegado:          { bg: "#fee2e2", text: "#dc2626" },
-    en_espera:         { bg: "#fef9c3", text: "#854d0e" },
-    COMPLETADO:        { bg: "#dcfce7", text: "#16a34a" },
-    FALLIDO:           { bg: "#fee2e2", text: "#dc2626" },
-    PENDIENTE:         { bg: "#fef9c3", text: "#854d0e" },
+    aceptado: { bg: "#dcfce7", text: "#16a34a" },
+    denegado: { bg: "#fee2e2", text: "#dc2626" },
+    en_espera: { bg: "#fef9c3", text: "#854d0e" },
+    COMPLETADO: { bg: "#dcfce7", text: "#16a34a" },
+    FALLIDO: { bg: "#fee2e2", text: "#dc2626" },
+    PENDIENTE: { bg: "#fef9c3", text: "#854d0e" },
     DESCONTADO_ORIGEN: { bg: "#dbeafe", text: "#1d4ed8" },
   }[estadoActual] || { bg: "#f3f4f6", text: "#6b7280" };
 
   return (
-    <Card sx={{ width: "100%", borderRadius: 4, boxShadow: 2, boxSizing: "border-box" }}>
+    <Card
+      sx={{
+        width: "100%",
+        borderRadius: 4,
+        boxShadow: 2,
+        boxSizing: "border-box",
+      }}
+    >
       <CardContent sx={{ p: { xs: 2, md: 4 } }}>
         <Box
           sx={{
@@ -53,8 +60,6 @@ function RequestCard({
             <Typography variant="subtitle2" color="text.secondary">
               {esEnviada
                 ? `Solicitud enviada a: ${origen}`
-                // ✅ CORRECCIÓN: recibida → quien me pidió es `destino`, no `origen`
-                // antes: `Solicitud de: ${destino}` (mostraba tu propio nodo)
                 : `Solicitud de: ${destino}`}
             </Typography>
           </Box>
@@ -76,7 +81,15 @@ function RequestCard({
           )}
         </Box>
 
-        <Box sx={{ display: "flex", gap: 2, alignItems: "center", mt: 3, flexWrap: "wrap" }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            alignItems: "center",
+            mt: 3,
+            flexWrap: "wrap",
+          }}
+        >
           <Box
             sx={{
               width: 60,
@@ -91,7 +104,10 @@ function RequestCard({
             <Inventory2OutlinedIcon sx={{ color: "#f97316", fontSize: 32 }} />
           </Box>
 
-          <Typography variant="h5" sx={{ fontWeight: 500, wordBreak: "break-word" }}>
+          <Typography
+            variant="h5"
+            sx={{ fontWeight: 500, wordBreak: "break-word" }}
+          >
             {cantidad} {solicitud.producto?.unit || solicitud.unit || "pz"} de{" "}
             {producto_nombre || "—"}
           </Typography>
@@ -112,7 +128,14 @@ function RequestCard({
                 width: "100%",
               }}
             >
-              <CloseIcon sx={{ color: "#dc2626", fontSize: 18, mt: "2px", flexShrink: 0 }} />
+              <CloseIcon
+                sx={{
+                  color: "#dc2626",
+                  fontSize: 18,
+                  mt: "2px",
+                  flexShrink: 0,
+                }}
+              />
               <Box>
                 <Typography
                   variant="caption"
@@ -128,7 +151,10 @@ function RequestCard({
                 >
                   Motivo de rechazo
                 </Typography>
-                <Typography variant="body2" sx={{ color: "#b91c1c", lineHeight: 1.5 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "#b91c1c", lineHeight: 1.5 }}
+                >
                   {error}
                 </Typography>
               </Box>

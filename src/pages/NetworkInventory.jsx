@@ -1,12 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 
-import {
-  Box,
-  Typography,
-  Paper,
-  Pagination,
-  CircularProgress,
-} from "@mui/material";
+import { Box, Typography, Paper, Pagination } from "@mui/material";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
 import Sidebar from "../components/layout/Sidebar";
@@ -38,6 +32,17 @@ const NetworkInventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const productsPerPage = 5;
+
+  const CATEGORIAS = {
+    1: "Perecederos",
+    2: "No Perecederos",
+    3: "Refrigerados",
+    4: "Congelados",
+    5: "Bebidas",
+    6: "Infantiles",
+    7: "Higiene",
+    8: "Otros",
+  };
 
   useEffect(() => {
     if (availableBranches.length > 0 && !selectedBranchId) {
@@ -90,18 +95,7 @@ const NetworkInventory = () => {
         const formattedReplica = productosReplica.map((product) => ({
           id: product.id_producto,
           name: product.nombre,
-          category:
-            {
-              1: "Granos",
-              2: "Enlatados",
-              3: "Líquidos",
-              4: "Abarrotes",
-              5: "Frutas y verduras",
-              6: "Legumbres",
-              7: "Congelados",
-              8: "Carnes",
-              9: "Higiene",
-            }[product.categoria_id] || "Sin categoría",
+          category: CATEGORIAS[product.categoria_id] || "Sin categoría",
           isReplica: true,
         }));
 
@@ -180,7 +174,7 @@ const NetworkInventory = () => {
               color: "#171717",
             }}
           >
-            Red de Inventarios
+            Red de inventarios
           </Typography>
 
           <BranchSelector
@@ -261,21 +255,11 @@ const NetworkInventory = () => {
             }}
           >
             {isReplica
-              ? `Productos Replicados (${filteredProducts.length})`
-              : `Productos Totales (${filteredProducts.length})`}
+              ? `Productos replicados (${filteredProducts.length})`
+              : `Productos totales (${filteredProducts.length})`}
           </Typography>
 
-          {loading ? (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                paddingY: 8,
-              }}
-            >
-              <CircularProgress />
-            </Box>
-          ) : error ? (
+          {error ? (
             <Box
               sx={{
                 paddingY: 8,
@@ -288,8 +272,8 @@ const NetworkInventory = () => {
             <>
               <InventoryTable
                 products={paginatedProducts}
-                branchName={selectedBranchData?.branchName}
                 isReplica={isReplica}
+                loading={loading}
               />
 
               {totalPages > 1 && (

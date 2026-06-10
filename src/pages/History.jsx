@@ -29,15 +29,10 @@ const ESTADOS_MAP = {
   EN_ESPERA: "EN ESPERA",
   ACEPTADO: "ACEPTADO",
   APROBADO: "ACEPTADO",
-  // ✅ CORRECCIÓN: agregado EN_ESPERA con guión bajo como clave adicional
-  // para cubrir el valor que regresa el campo `aprobacion` del backend
   RECHAZADO: "DENEGADO",
   DENEGADO: "DENEGADO",
 };
 
-// ✅ CORRECCIÓN: íconos resueltos en render, nunca guardados en estado
-// Antes se guardaban elementos JSX dentro del array de history,
-// lo que causaba re-render completo cada vez que se entraba a la pantalla
 const resolveIcon = (iconType) => {
   switch (iconType) {
     case "donacion":
@@ -70,8 +65,6 @@ const History = () => {
   const itemsPerPage = 5;
   const intervalRef = useRef(null);
 
-  // ✅ CORRECCIÓN: useCallback para que el intervalo no capture
-  // un closure desactualizado en cada render
   const loadHistory = useCallback(async () => {
     try {
       setLoading(true);
@@ -85,7 +78,6 @@ const History = () => {
       const historialDonaciones = donaciones.map((d) => ({
         type: "Donaciones",
         title: "Donación recibida",
-        // ✅ CORRECCIÓN: solo guardamos string "donacion", no el JSX <VolunteerActivism />
         iconType: "donacion",
         details: [
           `Producto: ${d.producto?.nombre ?? "Sin producto"}`,
@@ -98,7 +90,7 @@ const History = () => {
       const historialEntregas = entregas.map((e) => ({
         type: "Entregas",
         title: "Entrega realizada",
-        // ✅ CORRECCIÓN: solo guardamos string "entrega", no el JSX <Inventory2 />
+
         iconType: "entrega",
         details: [
           `Producto: ${e.producto?.nombre ?? "Sin producto"}`,
@@ -108,8 +100,6 @@ const History = () => {
         date: e.fecha,
       }));
 
-      // ✅ CORRECCIÓN: deduplicar antes de mapear para evitar entradas duplicadas
-      // cuando la misma transferencia aparece en enviadas y recibidas
       const todasTransferencias = [
         ...new Map(
           [...enviadas, ...recibidas].map((t) => [
@@ -122,27 +112,15 @@ const History = () => {
       const historialTransferencias = todasTransferencias.map((t) => {
         const currentNode = import.meta.env.VITE_CURRENT_NODE?.toLowerCase();
 
-        // ✅ CORRECCIÓN: la lógica correcta según el modelo del backend:
-        //   origen  = nodo que TIENE el producto (aprueba/rechaza)
-        //   destino = nodo que PIDIÓ el producto (tú cuando enviaste)
-        // Por lo tanto: "yo envié" se cumple cuando destino === mi nodo
         const yoEnvie = t.destino?.toLowerCase() === currentNode;
 
-        // ✅ CORRECCIÓN: leer `aprobacion` primero, luego `estado`
-        // porque el backend actualiza `aprobacion` al aprobar/rechazar,
-        // no el campo `estado`
         const estadoRaw = (t.aprobacion || t.estado || "").toUpperCase();
         const estado = ESTADOS_MAP[estadoRaw] ?? "EN ESPERA";
 
         return {
           type: "Solicitudes",
-          // ✅ CORRECCIÓN: solo guardamos string, no JSX
           iconType: yoEnvie ? "enviada" : "recibida",
 
-          // ✅ CORRECCIÓN: títulos correctos según el modelo
-          //   enviada  → le pedí a `origen`
-          //   recibida → me pidió `destino`
-          // Antes estaba invertido (usaba origen/destino al revés)
           title: yoEnvie
             ? `Solicitud enviada a ${t.origen}`
             : `Solicitud recibida de ${t.destino}`,
@@ -174,8 +152,6 @@ const History = () => {
 
   useEffect(() => {
     loadHistory();
-    // ✅ CORRECCIÓN: el intervalo ahora usa la referencia estable de useCallback
-    // antes se recreaba en cada render causando múltiples intervalos acumulados
     intervalRef.current = setInterval(loadHistory, 5000);
     return () => clearInterval(intervalRef.current);
   }, [loadHistory]);
