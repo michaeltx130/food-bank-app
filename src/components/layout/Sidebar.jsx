@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import logo from "../../assets/logo.jpeg";
 import Badge from "@mui/material/Badge";
-import { getResumenNotificaciones } from "../../services/api";
+import { getSolicitudesRecibidas } from "../../services/api";
 
 import {
   Drawer,
@@ -42,21 +42,27 @@ const Sidebar = () => {
   const currentBranch = branchNames[CURRENT_NODE] || "Sucursal";
 
   useEffect(() => {
-    const cargarNotificaciones = async () => {
-      try {
-        const data = await getResumenNotificaciones();
-        setNotificaciones(data.no_leidas || 0);
-      } catch (error) {
-        console.error(error);
-      }
-    };
+  const cargarPendientes = async () => {
+    try {
+      const solicitudes = await getSolicitudesRecibidas();
 
-    cargarNotificaciones();
+      const pendientes = solicitudes.filter(
+        (s) =>
+          String(s.aprobacion || "")
+            .toLowerCase()
+            .trim() === "en_espera",
+      );
 
-    const interval = setInterval(cargarNotificaciones, 5000);
+      setNotificaciones(pendientes.length);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
-    return () => clearInterval(interval);
-  }, []);
+  cargarPendientes();
+  const interval = setInterval(cargarPendientes, 5000);
+  return () => clearInterval(interval);
+}, []);
 
   const menuItems = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/" },

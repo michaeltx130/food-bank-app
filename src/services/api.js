@@ -317,15 +317,15 @@ export const getTransferencias = async () => {
   }
 };
 
-export const getResumenNotificaciones = async () => {
-  try {
-    const response = await api.get("/api/notificaciones/resumen");
-    return response.data;
-  } catch (error) {
-    console.error("Error obteniendo notificaciones:", error);
-    return {
-      no_leidas: 0,
-    };
-  }
-};
+// export const getResumenNotificaciones = async () => {
+//   try {
+//     const response = await api.get("/api/notificaciones/resumen");
+//     return response.data;
+//   } catch (error) {
+//     console.error("Error obteniendo notificaciones:", error);
+//     return {
+//       no_leidas: 0,
+//     };
+//   }
+// };
 
