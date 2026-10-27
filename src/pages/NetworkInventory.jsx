@@ -1,71 +1,68 @@
-import React, { useState, useMemo, useEffect } from "react";
-
+import { useState, useMemo, useEffect } from "react";
 import { Box, Typography, Paper, Pagination } from "@mui/material";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
-import Sidebar from "../components/layout/Sidebar";
+import MainLayout from "../components/layout/MainLayout";
 import SearchBar from "../components/inventory/SearchBar";
 import InventoryTable from "../components/inventory/InventoryTable";
 import BranchSelector from "../components/network/BranchSelector";
 import { getBranchProducts, getReplicaProducts } from "../services/api";
 
+const CURRENT_NODE = import.meta.env.VITE_CURRENT_NODE;
+
+const allBranches = [
+  { id: 1, key: "lapaz", branchName: "La Paz" },
+  { id: 2, key: "comondu", branchName: "Comondú" },
+  { id: 3, key: "loreto", branchName: "Loreto" },
+  { id: 4, key: "mulege", branchName: "Mulegé" },
+];
+
+const availableBranches = allBranches.filter(
+  (branch) => branch.key !== CURRENT_NODE,
+);
+
+const CATEGORIAS = {
+  1: "Perecederos",
+  2: "No Perecederos",
+  3: "Refrigerados",
+  4: "Congelados",
+  5: "Bebidas",
+  6: "Infantiles",
+  7: "Higiene",
+  8: "Otros",
+};
+
 const NetworkInventory = () => {
-  const CURRENT_NODE = import.meta.env.VITE_CURRENT_NODE;
-
-  const allBranches = [
-    { id: 1, key: "lapaz", branchName: "La Paz" },
-    { id: 2, key: "comondu", branchName: "Comondú" },
-    { id: 3, key: "loreto", branchName: "Loreto" },
-    { id: 4, key: "mulege", branchName: "Mulegé" },
-  ];
-
-  const availableBranches = useMemo(
-    () => allBranches.filter((branch) => branch.key !== CURRENT_NODE),
-    [CURRENT_NODE],
+  const [selectedBranchId, setSelectedBranchId] = useState(
+    availableBranches[0]?.id ?? "",
   );
-
-  const [selectedBranchId, setSelectedBranchId] = useState("");
   const [branchProducts, setBranchProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isReplica, setIsReplica] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const productsPerPage = 5;
 
-  const CATEGORIAS = {
-    1: "Perecederos",
-    2: "No Perecederos",
-    3: "Refrigerados",
-    4: "Congelados",
-    5: "Bebidas",
-    6: "Infantiles",
-    7: "Higiene",
-    8: "Otros",
-  };
-
-  useEffect(() => {
-    if (availableBranches.length > 0 && !selectedBranchId) {
-      setSelectedBranchId(availableBranches[0].id);
-    }
-  }, [availableBranches, selectedBranchId]);
-
-  const selectedBranchData = useMemo(
-    () => availableBranches.find((branch) => branch.id === selectedBranchId),
-    [selectedBranchId, availableBranches],
+  const selectedBranchData = availableBranches.find(
+    (branch) => branch.id === selectedBranchId,
   );
 
-  const fetchProducts = async () => {
+  useEffect(() => {
     if (!selectedBranchData) return;
 
-    try {
-      setLoading(true);
-      setError("");
-      setIsReplica(false);
+    let cancelled = false;
 
-      const data = await getBranchProducts(selectedBranchData.key);
+    const fetchProducts = async () => {
+      try {
+        const data = await getBranchProducts(selectedBranchData.key);
 
-      if (data && data.length > 0) {
+        if (!data || data.length === 0) {
+          throw new Error("Nodo sin respuesta");
+        }
+
+        if (cancelled) return;
+
         const formattedProducts = data.map((product) => ({
           id: product.id,
           name: product.nombre ?? "Sin nombre",
@@ -75,58 +72,62 @@ const NetworkInventory = () => {
         }));
 
         setBranchProducts(formattedProducts);
+        setIsReplica(false);
+        setError("");
+      } catch {
+        console.warn("Nodo no disponible. Usando réplica.");
 
-        return;
+        try {
+          const replicas = await getReplicaProducts();
+
+          if (cancelled) return;
+
+          const productosReplica = replicas.filter(
+            (p) =>
+              p.banco_origen?.toLowerCase() ===
+              selectedBranchData.key.toLowerCase(),
+          );
+
+          const formattedReplica = productosReplica.map((product) => ({
+            id: product.id_producto,
+            name: product.nombre,
+            category: CATEGORIAS[product.categoria_id] || "Sin categoría",
+            isReplica: true,
+          }));
+
+          setBranchProducts(formattedReplica);
+          setIsReplica(true);
+          setError("");
+        } catch {
+          if (cancelled) return;
+
+          setBranchProducts([]);
+          setIsReplica(false);
+          setError("No fue posible obtener inventario ni réplica.");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
+    };
 
-      throw new Error("Nodo sin respuesta");
-    } catch (err) {
-      console.warn("Nodo no disponible. Usando réplica.");
-
-      try {
-        const replicas = await getReplicaProducts();
-
-        const productosReplica = replicas.filter(
-          (p) =>
-            p.banco_origen?.toLowerCase() ===
-            selectedBranchData.key.toLowerCase(),
-        );
-
-        const formattedReplica = productosReplica.map((product) => ({
-          id: product.id_producto,
-          name: product.nombre,
-          category: CATEGORIAS[product.categoria_id] || "Sin categoría",
-          isReplica: true,
-        }));
-
-        setBranchProducts(formattedReplica);
-        setIsReplica(true);
-      } catch (e) {
-        setBranchProducts([]);
-        setError("No fue posible obtener inventario ni réplica.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
     fetchProducts();
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedBranchData]);
 
-  const filteredProducts = useMemo(
-    () =>
-      branchProducts.filter(
-        (product) =>
-          (isReplica || product.quantity > 0) &&
-          (product.name ?? "").toLowerCase().includes(searchTerm.toLowerCase()),
-      ),
-    [branchProducts, searchTerm],
-  );
+  const filteredProducts = useMemo(() => {
+    const term = SearchBar.normalizeText(searchTerm);
+    return branchProducts.filter(
+      (product) =>
+        (isReplica || product.quantity > 0) &&
+        SearchBar.normalizeText(product.name ?? "").includes(term),
+    );
+  }, [branchProducts, searchTerm, isReplica]);
 
   const paginatedProducts = useMemo(() => {
     const start = (page - 1) * productsPerPage;
-
     return filteredProducts.slice(start, start + productsPerPage);
   }, [filteredProducts, page]);
 
@@ -134,37 +135,26 @@ const NetworkInventory = () => {
 
   const handleBranchChange = (event) => {
     setSelectedBranchId(event.target.value);
-
     setPage(1);
     setSearchTerm("");
+    setLoading(true);
+    setError("");
+    setIsReplica(false);
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        height: "100vh",
-      }}
-    >
-      <Sidebar />
-
+    <MainLayout>
       <Box
-        sx={{
-          flexGrow: 1,
-          padding: 4,
-          backgroundColor: "#F9FAFB",
-          overflowY: "auto",
-        }}
+        sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
       >
-        {/* Header */}
+        {/* HEADER & SELECTOR DE SUCURSAL */}
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 4,
-            gap: 3,
-            flexWrap: "wrap",
+            width: "100%",
+            minHeight: "44px",
           }}
         >
           <Typography
@@ -184,12 +174,8 @@ const NetworkInventory = () => {
           />
         </Box>
 
-        {/* Buscador */}
-        <Box
-          sx={{
-            marginBottom: 3,
-          }}
-        >
+        {/* BARRA DE BÚSQUEDA */}
+        <Box sx={{ width: "100%" }}>
           <SearchBar
             placeholder="Buscar productos"
             value={searchTerm}
@@ -199,31 +185,23 @@ const NetworkInventory = () => {
             }}
           />
         </Box>
+
+        {/* ALERTA DE DATO REPLICADO */}
         {isReplica && (
           <Box
             sx={{
               display: "flex",
               alignItems: "center",
               gap: 1.5,
-
-              mb: 2,
               px: 2,
               py: 1.2,
-
-              borderRadius: "10px",
-
+              borderRadius: "12px",
               backgroundColor: "#FFFBEB",
               border: "1px solid #FDE68A",
-
               color: "#92400E",
             }}
           >
-            <WarningAmberIcon
-              sx={{
-                fontSize: 22,
-              }}
-            />
-
+            <WarningAmberIcon sx={{ fontSize: 22 }} />
             <Typography
               sx={{
                 fontSize: "14px",
@@ -237,20 +215,25 @@ const NetworkInventory = () => {
           </Box>
         )}
 
-        {/* Tabla */}
+        {/* TABLA DE PRODUCTOS */}
         <Paper
           sx={{
-            padding: 3,
-            borderRadius: "24px",
+            padding: "24px",
+            borderRadius: "12px",
             border: "1px solid #E7E5E4",
-            boxShadow: "0px 1px 2px rgba(0,0,0,0.04)",
+            boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.05)",
+            backgroundColor: "#FFFFFF",
+            width: "100%",
+            boxSizing: "border-box",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           <Typography
             sx={{
               fontWeight: 700,
-              fontSize: "24px",
-              marginBottom: 3,
+              fontSize: "20px",
+              marginBottom: 2,
               color: "#171717",
             }}
           >
@@ -260,12 +243,7 @@ const NetworkInventory = () => {
           </Typography>
 
           {error ? (
-            <Box
-              sx={{
-                paddingY: 8,
-                textAlign: "center",
-              }}
-            >
+            <Box sx={{ paddingY: 8, textAlign: "center" }}>
               <Typography color="error">{error}</Typography>
             </Box>
           ) : (
@@ -281,14 +259,22 @@ const NetworkInventory = () => {
                   sx={{
                     display: "flex",
                     justifyContent: "center",
-                    marginTop: 4,
+                    marginTop: 3,
                   }}
                 >
                   <Pagination
                     count={totalPages}
                     page={page}
                     onChange={(_, value) => setPage(value)}
-                    color="primary"
+                    sx={{
+                      "& .MuiPaginationItem-root.Mui-selected": {
+                        backgroundColor: "#029739",
+                        color: "#ffffff",
+                        "&:hover": {
+                          backgroundColor: "#15803d",
+                        },
+                      },
+                    }}
                   />
                 </Box>
               )}
@@ -296,7 +282,7 @@ const NetworkInventory = () => {
           )}
         </Paper>
       </Box>
-    </Box>
+    </MainLayout>
   );
 };
 
