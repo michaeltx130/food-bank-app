@@ -1,73 +1,86 @@
-import React from "react";
+import { Card, CardContent, Typography, Box, Skeleton } from "@mui/material";
 
-import { Card, CardContent, Typography, Box } from "@mui/material";
+// Esqueleto de carga interno
+const InfoPanelSkeleton = () => (
+  <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, py: 1 }}>
+    {[1, 2, 3].map((i) => (
+      <Box
+        key={i}
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          py: 0.5,
+        }}
+      >
+        <Skeleton variant="text" width="55%" height={24} />
+        <Skeleton
+          variant="rectangular"
+          width={65}
+          height={22}
+          sx={{ borderRadius: "10px" }}
+        />
+      </Box>
+    ))}
+  </Box>
+);
 
-const InfoPanel = ({
+export const InfoPanel = ({
   title,
-  icon,
   children,
-  maxHeight = 285,
+  loading = false,
   scrollable = true,
 }) => {
   return (
     <Card
       sx={{
-        borderRadius: "24px",
+        borderRadius: "12px",
         border: "1px solid #E7E5E4",
-        boxShadow: "0px 1px 2px rgba(0,0,0,0.04)",
+        boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.05)",
         backgroundColor: "#FFFFFF",
-        height: "100%",
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        boxSizing: "border-box",
+        overflow: "hidden",
+        minHeight: 0,
       }}
     >
       <CardContent
         sx={{
-          padding: "24px !important",
+          padding: "16px !important",
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+          height: "100%",
+          boxSizing: "border-box",
         }}
       >
-        {/* Header */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-            marginBottom: 3,
-          }}
-        >
-          {icon}
-
+        {/* HEADER */}
+        <Box sx={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
           <Typography
-            sx={{
-              fontSize: "18px",
-              fontWeight: 700,
-              color: "#171717",
-            }}
+            sx={{ fontSize: "16px", fontWeight: 700, color: "#171717" }}
           >
             {title}
           </Typography>
         </Box>
 
-        {/* Content Scroll */}
+        {/* CONTENIDO CON SCROLL */}
         <Box
           sx={{
-            maxHeight: scrollable ? maxHeight : "none",
+            flex: 1,
+            minHeight: 0,
             overflowY: scrollable ? "auto" : "visible",
             pr: scrollable ? 1 : 0,
-
-            "&::-webkit-scrollbar": {
-              width: "8px",
-            },
-
+            "&::-webkit-scrollbar": { width: "6px" },
             "&::-webkit-scrollbar-thumb": {
               backgroundColor: "#A8A29E",
               borderRadius: "999px",
             },
-
-            "&::-webkit-scrollbar-track": {
-              backgroundColor: "transparent",
-            },
+            "&::-webkit-scrollbar-track": { backgroundColor: "transparent" },
           }}
         >
-          {children}
+          {loading ? <InfoPanelSkeleton /> : children}
         </Box>
       </CardContent>
     </Card>

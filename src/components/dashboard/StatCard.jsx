@@ -1,93 +1,70 @@
-import { Card, CardContent, Typography, Box } from "@mui/material";
+import { Card, CardContent, Typography, Box, Skeleton } from "@mui/material";
 
-const StatCard = ({ title, value, description, icon, iconBg, iconColor }) => {
+const StatCard = ({ title, value, description, loading = false }) => {
   return (
     <Card
       sx={{
-        borderRadius: "22px",
-        border: "0.5px solid #E7E5E4",
-        boxShadow: "0px 1px 2px rgba(0,0,0,0.04)",
+        borderRadius: "12px",
+        border: "1px solid #E7E5E4",
+        boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.05)",
         backgroundColor: "#FFFFFF",
-        transition: "0.2s ease",
-
-        "&:hover": {
-          transform: "translateY(-2px)",
-          boxShadow: "0px 8px 20px rgba(0,0,0,0.06)",
-        },
+        height: "122px",
+        boxSizing: "border-box",
       }}
     >
       <CardContent
         sx={{
-          padding: "22px !important",
+          padding: "16px !important",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          height: "100%",
+          boxSizing: "border-box",
         }}
       >
-        {/* TOP */}
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            marginBottom: 3,
-            gap: 2,
-          }}
-        >
-          <Typography
-            sx={{
-              fontSize: "15px",
-              fontWeight: 500,
-              color: "#737373",
-            }}
-          >
-            {title}
-          </Typography>
-
-          {/* ICONO */}
-          <Box
-            sx={{
-              width: 42,
-              height: 42,
-              borderRadius: "10px",
-
-              backgroundColor: iconBg,
-
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-
-              color: iconColor,
-
-              "& svg": {
-                fontSize: 22,
-              },
-            }}
-          >
-            {icon}
-          </Box>
-        </Box>
-
-        {/* VALUE */}
-        <Typography
-          sx={{
-            fontSize: "48px",
-            fontWeight: 700,
-            lineHeight: 1,
-            color: "#171717",
-            marginBottom: 1.5,
-          }}
-        >
-          {value}
-        </Typography>
-
-        {/* DESCRIPTION */}
         <Typography
           sx={{
             fontSize: "14px",
-            color: "#A3A3A3",
             fontWeight: 500,
+            color: "#737373",
+            lineHeight: 1.2,
           }}
         >
-          {description}
+          {title}
         </Typography>
+
+        <Box>
+          {loading ? (
+            <Skeleton
+              variant="text"
+              width={80}
+              height={38}
+              sx={{ borderRadius: "4px" }}
+            />
+          ) : (
+            <Typography
+              sx={{
+                fontSize: "32px",
+                fontWeight: 700,
+                lineHeight: 1,
+                color: "#171717",
+                marginBottom: 0.5,
+              }}
+            >
+              {value}
+            </Typography>
+          )}
+
+          <Typography
+            sx={{
+              fontSize: "12px",
+              color: "#A3A3A3",
+              fontWeight: 500,
+            }}
+          >
+            {description}
+          </Typography>
+        </Box>
       </CardContent>
     </Card>
   );
