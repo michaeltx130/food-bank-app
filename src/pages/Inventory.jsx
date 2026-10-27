@@ -1,9 +1,7 @@
-import React, { useState, useMemo, useEffect } from "react";
-
+import { useState, useMemo, useEffect } from "react";
 import { Box, Typography, Button, Paper, Pagination } from "@mui/material";
-
 import AddIcon from "@mui/icons-material/Add";
-import Sidebar from "../components/layout/Sidebar";
+import MainLayout from "../components/layout/MainLayout";
 import SearchBar from "../components/inventory/SearchBar";
 import InventoryTable from "../components/inventory/InventoryTable";
 import AddProductModal from "../components/inventory/AddProductModal";
@@ -11,12 +9,10 @@ import { getProducts } from "../services/api";
 
 const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  //Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 5;
   const [openModal, setOpenModal] = useState(false);
 
-  //Los productos vendrán del backend
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -34,14 +30,12 @@ const Inventory = () => {
           name: product.nombre ?? "Sin nombre",
           category: product.categoria?.nombre || "Sin categoría",
           quantity: product.cantidad,
-          //luego esto vendrá del backend
           unit: product.unit,
         }));
 
         setProducts(formattedProducts);
       } catch (err) {
         console.error(err);
-
         setError("Error cargando productos");
       } finally {
         setLoading(false);
@@ -51,27 +45,22 @@ const Inventory = () => {
     fetchProducts();
   }, []);
 
-  //Productos filtrados
   const filteredProducts = useMemo(() => {
+    const term = SearchBar.normalizeText(searchTerm);
     return products.filter(
       (product) =>
         product.quantity > 0 &&
-        (product.name ?? "").toLowerCase().includes(searchTerm.toLowerCase()),
+        SearchBar.normalizeText(product.name ?? "").includes(term),
     );
   }, [searchTerm, products]);
 
-  //Lógica de paginación
   const startIndex = (currentPage - 1) * productsPerPage;
   const endIndex = startIndex + productsPerPage;
   const currentProducts = filteredProducts.slice(startIndex, endIndex);
-  //Páginas totales
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
-  const handleOpen = () => {
-    setOpenModal(true);
-  };
-  const handleClose = () => {
-    setOpenModal(false);
-  };
+
+  const handleOpen = () => setOpenModal(true);
+  const handleClose = () => setOpenModal(false);
 
   const handleProductCreated = (newProduct) => {
     setProducts((prev) => [newProduct, ...prev]);
@@ -79,43 +68,34 @@ const Inventory = () => {
 
   if (error) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <Typography color="error">{error}</Typography>
-      </Box>
+      <MainLayout>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100%",
+          }}
+        >
+          <Typography color="error">{error}</Typography>
+        </Box>
+      </MainLayout>
     );
   }
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        height: "100vh",
-      }}
-    >
-      <Sidebar />
+    <MainLayout>
       <Box
-        sx={{
-          flexGrow: 1,
-          padding: 4,
-          backgroundColor: "#F9FAFB",
-          overflowY: "auto",
-        }}
+        sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
       >
+        {/* 1. SECCIÓN HEADER */}
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 4,
-            gap: 3,
-            flexWrap: "wrap",
+            width: "100%",
+            minHeight: "44px",
           }}
         >
           <Typography
@@ -127,31 +107,31 @@ const Inventory = () => {
           >
             Inventario
           </Typography>
+
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleOpen}
             sx={{
-              backgroundColor: "#F97316",
-              borderRadius: "14px",
+              backgroundColor: "#029739",
+              borderRadius: "12px",
               textTransform: "none",
               fontWeight: 600,
-              paddingX: 3,
-              paddingY: 1.2,
+              paddingX: 2.5,
+              paddingY: 1,
+              boxShadow: "none",
               "&:hover": {
-                backgroundColor: "#EA580C",
+                backgroundColor: "#15803d",
+                boxShadow: "none",
               },
             }}
           >
             Agregar producto
           </Button>
         </Box>
-        {/* Buscador */}
-        <Box
-          sx={{
-            marginBottom: 3,
-          }}
-        >
+
+        {/* 2. BUSCADOR */}
+        <Box sx={{ width: "100%" }}>
           <SearchBar
             placeholder="Buscar productos"
             value={searchTerm}
@@ -162,20 +142,25 @@ const Inventory = () => {
           />
         </Box>
 
-        {/* Tabla */}
+        {/* 3. TABLA Y TARJETA CONTENEDORA */}
         <Paper
           sx={{
-            padding: 3,
-            borderRadius: "24px",
+            padding: "24px",
+            borderRadius: "12px",
             border: "1px solid #E7E5E4",
-            boxShadow: "0px 1px 2px rgba(0,0,0,0.04)",
+            boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.05)",
+            backgroundColor: "#FFFFFF",
+            width: "100%",
+            boxSizing: "border-box",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           <Typography
             sx={{
               fontWeight: 700,
-              fontSize: "24px",
-              marginBottom: 3,
+              fontSize: "20px",
+              marginBottom: 2,
               color: "#171717",
             }}
           >
@@ -189,26 +174,35 @@ const Inventory = () => {
               sx={{
                 display: "flex",
                 justifyContent: "center",
-                marginTop: 4,
+                marginTop: 3,
               }}
             >
               <Pagination
                 count={totalPages}
                 page={currentPage}
                 onChange={(event, value) => setCurrentPage(value)}
-                color="primary"
+                sx={{
+                  "& .MuiPaginationItem-root.Mui-selected": {
+                    backgroundColor: "#029739",
+                    color: "#ffffff",
+                    "&:hover": {
+                      backgroundColor: "#15803d",
+                    },
+                  },
+                }}
               />
             </Box>
           )}
         </Paper>
-        {/* Modal */}
-        <AddProductModal
-          open={openModal}
-          handleClose={handleClose}
-          onProductCreated={handleProductCreated}
-        />
       </Box>
-    </Box>
+
+      {/* MODAL */}
+      <AddProductModal
+        open={openModal}
+        handleClose={handleClose}
+        onProductCreated={handleProductCreated}
+      />
+    </MainLayout>
   );
 };
 

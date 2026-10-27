@@ -1,56 +1,96 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
-  DialogContent,
   Typography,
   Box,
   TextField,
   Button,
+  IconButton,
   MenuItem,
   Alert,
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import AddIcon from "@mui/icons-material/Add";
 
 import { createProduct, getCategories } from "../../services/api";
 
+const rowFieldStyle = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "10px",
+    backgroundColor: "#FFFFFF",
+
+    "&.Mui-focused fieldset": {
+      borderColor: "#029739",
+    },
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: "#029739",
+  },
+};
+
+const errorKeys = {
+  name: "name",
+  categoryId: "category",
+  quantity: "quantity",
+  unit: "unit",
+};
+
+// Generador de ID seguro sin acceder a useRef durante el renderizado
+const createNewProducto = () => ({
+  id: Date.now() + Math.random(),
+  name: "",
+  categoryId: "",
+  quantity: "",
+  unit: "",
+});
+
 const AddProductModal = ({ open, handleClose, onProductCreated }) => {
-  const [name, setName] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [unit, setUnit] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [productos, setProductos] = useState([createNewProducto()]);
+  const [focusId, setFocusId] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
 
   const submitLock = useRef(false);
+  const listEndRef = useRef(null);
+  const prevCount = useRef(1);
 
+  // Obtener categorías cuando el modal se abre
   useEffect(() => {
     if (!open) return;
-
-    setErrors({});
-    setSuccess(false);
 
     const fetchCategories = async () => {
       try {
         const data = await getCategories();
-        setCategories(data);
-      } catch (error) {
-        console.error(error);
+        setCategories(data || []);
+      } catch (err) {
+        console.error("Error al obtener categorías:", err);
       }
     };
 
     fetchCategories();
   }, [open]);
 
-  const resetForm = () => {
-    setName("");
-    setQuantity("");
-    setUnit("");
-    setCategoryId("");
+  // Scroll automático al agregar filas
+  useEffect(() => {
+    if (productos.length > prevCount.current) {
+      listEndRef.current?.scrollIntoView({
+        block: "nearest",
+        behavior: "smooth",
+      });
+    }
+    prevCount.current = productos.length;
+  }, [productos.length]);
 
+  const resetForm = () => {
+    setProductos([createNewProducto()]);
+    setFocusId(null);
     setErrors({});
     setSuccess(false);
+    setError(null);
   };
 
   const handleModalClose = () => {
@@ -59,30 +99,64 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
     handleClose();
   };
 
+  const handleAddProducto = () => {
+    const nuevo = createNewProducto();
+    setProductos((prev) => [...prev, nuevo]);
+    setFocusId(nuevo.id);
+  };
+
+  const handleRemoveProducto = (id) => {
+    setProductos((prev) => prev.filter((p) => p.id !== id));
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[`name_${id}`];
+      delete copy[`category_${id}`];
+      delete copy[`quantity_${id}`];
+      delete copy[`unit_${id}`];
+      return copy;
+    });
+  };
+
+  const handleChangeProducto = (id, field, value) => {
+    setProductos((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, [field]: value } : p)),
+    );
+    setErrors((prev) => ({ ...prev, [`${errorKeys[field]}_${id}`]: "" }));
+  };
+
+  const handleQuantityKeyDown = (e, prod) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (prod.name.trim() && prod.categoryId && prod.quantity) {
+      handleAddProducto();
+    }
+  };
+
   const handleSubmit = async () => {
     if (loading || submitLock.current) return;
 
     submitLock.current = true;
-
     const newErrors = {};
 
-    if (!name.trim()) {
-      newErrors.name = "Ingresa el nombre del producto";
-    }
+    productos.forEach((p) => {
+      if (!p.name.trim()) {
+        newErrors[`name_${p.id}`] = "Ingresa el producto";
+      }
 
-    if (!quantity) {
-      newErrors.quantity = "Ingresa una cantidad";
-    } else if (Number(quantity) <= 0) {
-      newErrors.quantity = "La cantidad debe ser mayor a 0";
-    }
+      if (!p.quantity) {
+        newErrors[`quantity_${p.id}`] = "Requerida";
+      } else if (Number(p.quantity) <= 0) {
+        newErrors[`quantity_${p.id}`] = "Mayor a 0";
+      }
 
-    if (!unit) {
-      newErrors.unit = "Selecciona una unidad";
-    }
+      if (!p.unit) {
+        newErrors[`unit_${p.id}`] = "Selecciona";
+      }
 
-    if (!categoryId) {
-      newErrors.category = "Selecciona una categoría";
-    }
+      if (!p.categoryId) {
+        newErrors[`category_${p.id}`] = "Selecciona";
+      }
+    });
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -93,35 +167,55 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
     try {
       setErrors({});
       setSuccess(false);
+      setError(null);
       setLoading(true);
 
-      const createdProduct = await createProduct({
-        nombre: name,
-        categoria_id: Number(categoryId),
-        cantidad: Number(quantity),
-        unit,
+      const results = await Promise.allSettled(
+        productos.map(async (p) => {
+          const createdProduct = await createProduct({
+            nombre: p.name.trim(),
+            categoria_id: Number(p.categoryId),
+            cantidad: Number(p.quantity),
+            unit: p.unit,
+          });
+
+          return {
+            id: createdProduct.id,
+            name: createdProduct.nombre,
+            category:
+              categories.find((cat) => cat.id === Number(p.categoryId))
+                ?.nombre || "Sin categoría",
+            quantity: createdProduct.cantidad,
+            unit: createdProduct.unit,
+          };
+        }),
+      );
+
+      results.forEach((r) => {
+        if (r.status === "fulfilled") onProductCreated(r.value);
       });
 
-      const formattedProduct = {
-        id: createdProduct.id,
-        name: createdProduct.nombre,
-        category:
-          categories.find((cat) => cat.id === Number(categoryId))?.nombre ||
-          "Sin categoría",
-        quantity: createdProduct.cantidad,
-        unit: createdProduct.unit,
-      };
+      const fallidos = productos.filter(
+        (_, i) => results[i].status === "rejected",
+      );
 
-      onProductCreated(formattedProduct);
+      if (fallidos.length === 0) {
+        setSuccess(true);
 
-      setSuccess(true);
-
-      setTimeout(() => {
-        handleModalClose();
+        setTimeout(() => {
+          handleModalClose();
+          submitLock.current = false;
+        }, 500);
+      } else {
+        setProductos(fallidos);
+        setError(
+          `No se pudieron agregar ${fallidos.length} de ${productos.length} productos. Los demás ya quedaron guardados; revisa los que siguen en la lista y vuelve a intentar.`,
+        );
         submitLock.current = false;
-      }, 500);
-    } catch (error) {
-      console.error(error);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Error al agregar los productos.");
       submitLock.current = false;
     } finally {
       setLoading(false);
@@ -132,170 +226,313 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
     <Dialog
       open={open}
       onClose={loading ? undefined : handleModalClose}
-      maxWidth="sm"
       fullWidth
+      maxWidth="md"
       PaperProps={{
         sx: {
-          borderRadius: "32px",
-          padding: 2,
+          borderRadius: "12px",
+          width: "100%",
+          maxWidth: "760px",
+          margin: "16px",
+          maxHeight: "calc(100% - 32px)",
+          boxShadow: "0px 8px 24px rgba(0, 0, 0, 0.1)",
+          overflow: "hidden",
         },
       }}
     >
-      <DialogContent>
+      {/* HEADER DEL MODAL */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          padding: "32px 40px 24px 24px",
+          boxSizing: "border-box",
+        }}
+      >
         <Typography
-          variant="h4"
           sx={{
-            fontWeight: "bold",
+            fontWeight: 700,
+            fontSize: "24px",
             color: "#171717",
-            marginBottom: 4,
+            lineHeight: 1.2,
           }}
         >
           Agregar producto
         </Typography>
+      </Box>
 
-        {success && (
-          <Alert severity="success" sx={{ mb: 3 }}>
-            ¡Producto agregado correctamente!
-          </Alert>
-        )}
-
-        {/* Producto */}
-        <TextField
-          fullWidth
-          label="Producto"
-          placeholder="Alimento/producto"
-          value={name}
-          onChange={(e) => {
-            setName(e.target.value);
-
-            setErrors((prev) => ({
-              ...prev,
-              name: "",
-            }));
-          }}
-          error={!!errors.name}
-          helperText={errors.name}
-          sx={{ marginBottom: 3 }}
-        />
-
-        {/* Categoría */}
-        <TextField
-          fullWidth
-          select
-          label="Categoría"
-          value={categoryId}
-          onChange={(e) => {
-            setCategoryId(e.target.value);
-
-            setErrors((prev) => ({
-              ...prev,
-              category: "",
-            }));
-          }}
-          error={!!errors.category}
-          helperText={errors.category}
-          sx={{ marginBottom: 4 }}
-        >
-          {categories.map((category) => (
-            <MenuItem key={category.id} value={category.id}>
-              {category.nombre}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        {/* Cantidad + Unidad */}
+      {(error || success) && (
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 2,
-            marginBottom: 3,
+            padding: "0px 24px 16px 24px",
+            width: "100%",
+            boxSizing: "border-box",
           }}
         >
-          <TextField
-            fullWidth
-            label="Cantidad"
-            type="number"
-            value={quantity}
-            onChange={(e) => {
-              setQuantity(e.target.value);
-
-              setErrors((prev) => ({
-                ...prev,
-                quantity: "",
-              }));
-            }}
-            error={!!errors.quantity}
-            helperText={errors.quantity}
-            inputProps={{ min: 1 }}
-          />
-
-          <TextField
-            fullWidth
-            select
-            label="Unidad"
-            value={unit}
-            onChange={(e) => {
-              setUnit(e.target.value);
-
-              setErrors((prev) => ({
-                ...prev,
-                unit: "",
-              }));
-            }}
-            error={!!errors.unit}
-            helperText={errors.unit}
-          >
-            <MenuItem value="pz">Pz</MenuItem>
-            <MenuItem value="kg">Kg</MenuItem>
-            <MenuItem value="gr">Gramos</MenuItem>
-            <MenuItem value="L">Litros</MenuItem>
-            <MenuItem value="ml">Mililitros</MenuItem>
-          </TextField>
+          {error && (
+            <Alert
+              severity="error"
+              sx={{ width: "100%", borderRadius: "12px" }}
+            >
+              {error}
+            </Alert>
+          )}
+          {success && (
+            <Alert
+              severity="success"
+              sx={{ width: "100%", borderRadius: "12px" }}
+            >
+              {productos.length > 1
+                ? "¡Productos agregados correctamente!"
+                : "¡Producto agregado correctamente!"}
+            </Alert>
+          )}
         </Box>
+      )}
 
-        {/* Botones */}
+      {/* FORMULARIO DINÁMICO MULTI-PRODUCTO */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          padding: "8px 24px 16px 24px",
+          width: "100%",
+          flex: "1 1 auto",
+          minHeight: 0,
+          overflowY: "auto",
+          boxSizing: "border-box",
+        }}
+      >
         <Box
           sx={{
+            width: "100%",
             display: "flex",
+            flexDirection: "column",
             gap: 2,
           }}
         >
+          {productos.map((prod, index) => (
+            <Box
+              key={prod.id}
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr 1fr 40px",
+                  sm: "28px 1.6fr 1.2fr 0.8fr 1fr 40px",
+                },
+                gap: "8px",
+                alignItems: "flex-start",
+                width: "100%",
+                boxSizing: "border-box",
+                backgroundColor: "#F9FAFB",
+                border: "1px solid #E7E5E4",
+                borderRadius: "12px",
+                padding: "10px",
+                animation: "rowIn 0.18s ease-out",
+                "@keyframes rowIn": {
+                  from: { opacity: 0, transform: "translateY(-6px)" },
+                  to: { opacity: 1, transform: "none" },
+                },
+              }}
+            >
+              <Typography
+                sx={{
+                  display: { xs: "none", sm: "block" },
+                  textAlign: "center",
+                  fontWeight: 700,
+                  fontSize: "14px",
+                  color: "#737373",
+                  mt: "9px",
+                }}
+              >
+                {index + 1}
+              </Typography>
+
+              {/* Producto */}
+              <TextField
+                fullWidth
+                size="small"
+                autoFocus={prod.id === focusId}
+                label="Producto"
+                placeholder="Alimento/producto"
+                value={prod.name}
+                onChange={(e) =>
+                  handleChangeProducto(prod.id, "name", e.target.value)
+                }
+                error={!!errors[`name_${prod.id}`]}
+                helperText={errors[`name_${prod.id}`]}
+                sx={{
+                  ...rowFieldStyle,
+                  gridColumn: { xs: "1 / 3", sm: "auto" },
+                }}
+              />
+
+              {/* Categoría */}
+              <TextField
+                fullWidth
+                select
+                size="small"
+                label="Categoría"
+                value={prod.categoryId}
+                onChange={(e) =>
+                  handleChangeProducto(prod.id, "categoryId", e.target.value)
+                }
+                error={!!errors[`category_${prod.id}`]}
+                helperText={errors[`category_${prod.id}`]}
+                sx={{
+                  ...rowFieldStyle,
+                  gridColumn: { xs: "1 / -1", sm: "auto" },
+                }}
+              >
+                {categories.map((category) => (
+                  <MenuItem key={category.id} value={category.id}>
+                    {category.nombre}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              {/* Cantidad */}
+              <TextField
+                fullWidth
+                size="small"
+                label="Cantidad"
+                type="number"
+                value={prod.quantity}
+                onChange={(e) =>
+                  handleChangeProducto(prod.id, "quantity", e.target.value)
+                }
+                onKeyDown={(e) => handleQuantityKeyDown(e, prod)}
+                error={!!errors[`quantity_${prod.id}`]}
+                helperText={errors[`quantity_${prod.id}`]}
+                inputProps={{ min: 1 }}
+                sx={rowFieldStyle}
+              />
+
+              {/* Unidad */}
+              <TextField
+                fullWidth
+                select
+                size="small"
+                label="Unidad"
+                value={prod.unit}
+                onChange={(e) =>
+                  handleChangeProducto(prod.id, "unit", e.target.value)
+                }
+                error={!!errors[`unit_${prod.id}`]}
+                helperText={errors[`unit_${prod.id}`]}
+                sx={rowFieldStyle}
+              >
+                <MenuItem value="pz">Pz</MenuItem>
+                <MenuItem value="kg">Kg</MenuItem>
+                <MenuItem value="gr">Gramos</MenuItem>
+                <MenuItem value="L">Litros</MenuItem>
+                <MenuItem value="ml">Mililitros</MenuItem>
+              </TextField>
+
+              {/* Botón Borrar Fila */}
+              <IconButton
+                aria-label="Quitar producto"
+                onClick={() => handleRemoveProducto(prod.id)}
+                disabled={productos.length === 1}
+                sx={{
+                  color: "#A3A3A3",
+                  borderRadius: "10px",
+                  gridColumn: { xs: 3, sm: "auto" },
+                  gridRow: { xs: 1, sm: "auto" },
+                  "&:hover": {
+                    backgroundColor: "#E8F6ED",
+                    color: "#C62828",
+                  },
+                }}
+              >
+                <DeleteOutlineIcon />
+              </IconButton>
+            </Box>
+          ))}
+
+          {/* Botón para Añadir Fila */}
           <Button
             fullWidth
-            variant="outlined"
-            onClick={handleModalClose}
-            disabled={loading}
+            startIcon={<AddIcon />}
+            onClick={handleAddProducto}
             sx={{
-              borderRadius: "16px",
-              paddingY: 1.5,
               textTransform: "none",
-            }}
-          >
-            Cancelar
-          </Button>
-
-          <LoadingButton
-            fullWidth
-            variant="contained"
-            loading={loading}
-            disabled={loading}
-            onClick={handleSubmit}
-            sx={{
-              borderRadius: "16px",
-              paddingY: 1.5,
-              textTransform: "none",
-              backgroundColor: "#F97316",
-
+              color: "#029739",
+              fontWeight: 600,
+              border: "1.5px dashed #029739",
+              borderRadius: "12px",
+              paddingY: "13px",
+              mt: "2px",
               "&:hover": {
-                backgroundColor: "#EA580C",
+                backgroundColor: "#E8F6ED",
+                border: "1.5px dashed #029739",
               },
             }}
           >
-            Agregar producto
-          </LoadingButton>
+            Agregar otro producto
+          </Button>
+
+          <div ref={listEndRef} />
         </Box>
-      </DialogContent>
+      </Box>
+
+      {/* PIE DEL MODAL (BOTONES DE ACCIÓN) */}
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2,
+          width: "100%",
+          padding: "16px 24px 24px 24px",
+          boxSizing: "border-box",
+        }}
+      >
+        <Button
+          fullWidth
+          variant="outlined"
+          onClick={handleModalClose}
+          disabled={loading}
+          sx={{
+            borderRadius: "12px",
+            paddingY: 1.2,
+            textTransform: "none",
+            fontWeight: 400,
+            borderColor: "#E7E5E4",
+            color: "#44403C",
+            "&:hover": {
+              borderColor: "#A8A29E",
+              backgroundColor: "#F5F5F4",
+            },
+          }}
+        >
+          Cancelar
+        </Button>
+
+        <LoadingButton
+          fullWidth
+          variant="contained"
+          loading={loading}
+          disabled={loading}
+          onClick={handleSubmit}
+          sx={{
+            borderRadius: "12px",
+            paddingY: 1.2,
+            textTransform: "none",
+            fontWeight: 600,
+            backgroundColor: "#029739",
+            boxShadow: "none",
+            "&:hover": {
+              backgroundColor: "#15803d",
+              boxShadow: "none",
+            },
+          }}
+        >
+          {productos.length > 1
+            ? `Agregar productos (${productos.length})`
+            : "Agregar producto"}
+        </LoadingButton>
+      </Box>
     </Dialog>
   );
 };

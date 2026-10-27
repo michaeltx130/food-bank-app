@@ -1,13 +1,15 @@
-import React from "react";
-
 import { TextField, Box } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
-const SearchBar = ({
-  placeholder = "Buscar productos",
-  value,
-  onChange,
-}) => {
+//remover acentos/tildes y convertir a minúsculas
+const normalizeText = (text = "") => {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+};
+
+const SearchBar = ({ placeholder = "Buscar productos", value, onChange }) => {
   return (
     <Box
       sx={{
@@ -37,7 +39,7 @@ const SearchBar = ({
         onChange={onChange}
         sx={{
           "& .MuiOutlinedInput-root": {
-            borderRadius: "16px",
+            borderRadius: "12px",
             backgroundColor: "#FFFFFF",
             paddingLeft: "40px",
 
@@ -50,7 +52,7 @@ const SearchBar = ({
             },
 
             "&.Mui-focused fieldset": {
-              borderColor: "#3480de",
+              borderColor: "#029739",
             },
           },
 
@@ -62,5 +64,7 @@ const SearchBar = ({
     </Box>
   );
 };
+
+SearchBar.normalizeText = normalizeText;
 
 export default SearchBar;
