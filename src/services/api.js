@@ -72,6 +72,21 @@ export const createProduct = async (productData) => {
   return response.data;
 };
 
+// Registrar movimiento de inventario
+export const createMovimiento = async ({ producto_id, tipo, cantidad }) => {
+  try {
+    const response = await api.post(`/api/${CURRENT_NODE}/movimientos`, {
+      producto_id,
+      tipo,
+      cantidad,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error registrando movimiento:", error);
+    return null;
+  }
+};
+
 // Obtener categorías
 export const getCategories = async () => {
   const response = await axios.get(`${API_URL}/api/${CURRENT_NODE}/categorias`);
@@ -173,8 +188,6 @@ export const requestProduct = async (
     throw error;
   }
 };
-
-
 
 // Crear solicitud / transferencia
 export const createSolicitud = async ({
@@ -328,4 +341,3 @@ export const getTransferencias = async () => {
 //     };
 //   }
 // };
-

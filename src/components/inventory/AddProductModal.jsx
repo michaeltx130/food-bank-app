@@ -13,7 +13,11 @@ import LoadingButton from "@mui/lab/LoadingButton";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import AddIcon from "@mui/icons-material/Add";
 
-import { createProduct, getCategories } from "../../services/api";
+import {
+  createProduct,
+  getCategories,
+  createMovimiento,
+} from "../../services/api";
 
 const rowFieldStyle = {
   "& .MuiOutlinedInput-root": {
@@ -177,6 +181,12 @@ const AddProductModal = ({ open, handleClose, onProductCreated }) => {
             categoria_id: Number(p.categoryId),
             cantidad: Number(p.quantity),
             unit: p.unit,
+          });
+
+          await createMovimiento({
+            producto_id: createdProduct.id,
+            tipo: "entrada",
+            cantidad: createdProduct.cantidad,
           });
 
           return {

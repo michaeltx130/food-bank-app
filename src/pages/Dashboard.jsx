@@ -163,6 +163,16 @@ const Dashboard = () => {
       if (idx !== -1) entradas[idx] += Number(d.cantidad) || 1;
     });
 
+    products.forEach((p) => {
+      if (p.donaciones?.length > 0) return;
+
+      (p.movimientos || []).forEach((m) => {
+        if (m.tipo !== "entrada") return;
+        const idx = obtenerIndiceSemanaActual(m.fecha);
+        if (idx !== -1) entradas[idx] += Number(m.cantidad) || 1;
+      });
+    });
+
     entregas.forEach((e) => {
       const idx = obtenerIndiceSemanaActual(e.fecha || e.created_at);
       if (idx !== -1) salidas[idx] += Number(e.cantidad) || 1;
@@ -205,7 +215,7 @@ const Dashboard = () => {
       entradas,
       salidas,
     };
-  }, [donaciones, entregas, solicitudes]);
+  }, [donaciones, entregas, solicitudes, products]);
 
   return (
     <MainLayout>
