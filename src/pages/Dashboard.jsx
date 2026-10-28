@@ -86,15 +86,20 @@ const Dashboard = () => {
   }, [products]);
 
   const solicitudesPendientes = useMemo(() => {
-    return solicitudes.filter(
-      (s) =>
-        String(s.aprobacion || "")
+    return solicitudes.filter((s) => {
+      const estaEnEspera =
+        String(s.aprobacion || s.estado || "")
           .toLowerCase()
-          .trim() === "en_espera",
-    );
+          .trim() === "en_espera";
+
+      const esRecibidaEnMiNodo =
+        s.origen?.toLowerCase() === CURRENT_NODE?.toLowerCase();
+
+      return estaEnEspera && esRecibidaEnMiNodo;
+    });
   }, [solicitudes]);
 
-  // 1. TOP 3 PRODUCTOS MÁS SOLICITADOS (BASADO EN ENTREGAS Y SOLICITUDES SALIENTES)
+  //3 PRODUCTOS MÁS SOLICITADOS (BASADO EN ENTREGAS Y SOLICITUDES SALIENTES)
   const chartPieData = useMemo(() => {
     const conteoProductos = {};
 
@@ -381,6 +386,7 @@ const Dashboard = () => {
                     </Typography>
                   </Box>
 
+                  {/* Muestra quién te solicita el producto */}
                   <Box
                     sx={{
                       backgroundColor: "#FA7B0A",
@@ -393,7 +399,7 @@ const Dashboard = () => {
                       textTransform: "capitalize",
                     }}
                   >
-                    {s.destino || s.origen}
+                    {s.destino}
                   </Box>
                 </Box>
               ))
