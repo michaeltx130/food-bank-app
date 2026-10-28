@@ -1,8 +1,15 @@
-import { Card, CardContent, Typography, Button, Box } from "@mui/material";
-import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
-import ApartmentOutlinedIcon from "@mui/icons-material/ApartmentOutlined";
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Box,
+  Collapse,
+} from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 function RequestCard({
   solicitud = {},
@@ -21,202 +28,356 @@ function RequestCard({
     aprobacion,
     error,
     created_at,
+    items = [],
   } = solicitud;
+
+  const [expanded, setExpanded] = useState(false);
 
   const esEnviada = type === "sent";
   const estadoActual = aprobacion || estado;
+  const tieneVariosProductos = items && items.length > 1;
 
-  const estadoColor = {
-    aceptado: { bg: "#dcfce7", text: "#16a34a" },
-    denegado: { bg: "#fee2e2", text: "#dc2626" },
-    en_espera: { bg: "#fef9c3", text: "#854d0e" },
-    COMPLETADO: { bg: "#dcfce7", text: "#16a34a" },
-    FALLIDO: { bg: "#fee2e2", text: "#dc2626" },
-    PENDIENTE: { bg: "#fef9c3", text: "#854d0e" },
-    DESCONTADO_ORIGEN: { bg: "#dbeafe", text: "#1d4ed8" },
-  }[estadoActual] || { bg: "#f3f4f6", text: "#6b7280" };
+  const estadoStyle = {
+    aceptado: { bg: "#DCFCE7", text: "#029739", label: "ACEPTADO" },
+    COMPLETADO: { bg: "#DCFCE7", text: "#029739", label: "ACEPTADO" },
+    denegado: { bg: "#FEE2E2", text: "#DC2626", label: "DENEGADO" },
+    FALLIDO: { bg: "#FEE2E2", text: "#DC2626", label: "DENEGADO" },
+    en_espera: { bg: "#FEFCE8", text: "#EAB308", label: "EN ESPERA" },
+    PENDIENTE: { bg: "#FEFCE8", text: "#EAB308", label: "EN ESPERA" },
+  }[estadoActual] || {
+    bg: "#F3F4F6",
+    text: "#6B7280",
+    label: String(estadoActual || "").toUpperCase(),
+  };
+
+  const primerProducto = items.length > 0 ? items[0] : null;
+  const productosVisibles = items.slice(0, 3);
+  const restantes = items.length - productosVisibles.length;
 
   return (
     <Card
       sx={{
         width: "100%",
-        borderRadius: 4,
-        boxShadow: 2,
+        borderRadius: "12px",
+        border: "1px solid #E7E5E4",
+        boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.05)",
+        backgroundColor: "#FFFFFF",
         boxSizing: "border-box",
+        overflow: "hidden",
+        transition: "0.2s ease-in-out",
       }}
     >
-      <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+      <CardContent
+        sx={{
+          padding: "24px 32px !important",
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+        }}
+      >
+        {/* HEADER */}
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: { xs: "flex-start", md: "center" },
-            flexDirection: { xs: "column", md: "row" },
-            gap: 2,
+            alignItems: "center",
+            width: "100%",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <ApartmentOutlinedIcon sx={{ color: "#6b7280", fontSize: 18 }} />
-            <Typography variant="subtitle2" color="text.secondary">
-              {esEnviada
-                ? `Solicitud enviada a: ${origen}`
-                : `Solicitud de: ${destino}`}
-            </Typography>
-          </Box>
+          <Typography
+            sx={{
+              fontSize: "15px",
+              fontWeight: 500,
+              color: "#737373",
+            }}
+          >
+            {esEnviada
+              ? `Solicitud enviada a: ${origen || "—"}`
+              : `Solicitud de: ${destino || "—"}`}
+          </Typography>
 
-          {estado && (
-            <Typography
-              variant="caption"
+          {estadoActual && (
+            <Box
               sx={{
                 px: 1.5,
                 py: 0.5,
-                borderRadius: 2,
-                fontWeight: 600,
-                backgroundColor: estadoColor.bg,
-                color: estadoColor.text,
+                borderRadius: "8px",
+                border: `1px solid ${estadoStyle.text}33`,
+                backgroundColor: estadoStyle.bg,
+                color: estadoStyle.text,
+                fontSize: "12px",
+                fontWeight: 700,
+                letterSpacing: "0.5px",
               }}
             >
-              {String(estadoActual).replace(/_/g, " ").toUpperCase()}
-            </Typography>
+              {estadoStyle.label}
+            </Box>
           )}
         </Box>
 
+        {/* CONTENIDO RESUMEN */}
         <Box
           sx={{
             display: "flex",
-            gap: 2,
+            justifyContent: "space-between",
             alignItems: "center",
-            mt: 3,
             flexWrap: "wrap",
+            gap: 1,
+            width: "100%",
           }}
         >
-          <Box
+          <Typography
             sx={{
-              width: 60,
-              height: 60,
-              backgroundColor: "#fff3ed",
-              borderRadius: 3,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              fontSize: "22px",
+              fontWeight: 700,
+              color: "#171717",
+              lineHeight: 1.2,
             }}
           >
-            <Inventory2OutlinedIcon sx={{ color: "#f97316", fontSize: 32 }} />
-          </Box>
-
-          <Typography
-            variant="h5"
-            sx={{ fontWeight: 500, wordBreak: "break-word" }}
-          >
-            {cantidad} {solicitud.producto?.unit || solicitud.unit || "pz"} de{" "}
-            {producto_nombre || "—"}
+            {tieneVariosProductos
+              ? `${items.length} productos solicitados`
+              : primerProducto
+                ? `${primerProducto.cantidad} ${primerProducto.unit} de ${primerProducto.nombre}`
+                : `${cantidad} ${solicitud.producto?.unit || solicitud.unit || "pz"} de ${producto_nombre || "—"}`}
           </Typography>
-        </Box>
 
-        <Box sx={{ display: "flex", flexDirection: "column", mt: 4, gap: 2 }}>
-          {aprobacion === "denegado" && error && (
-            <Box
+          {tieneVariosProductos && (
+            <Button
+              size="small"
+              onClick={() => setExpanded((prev) => !prev)}
+              aria-expanded={expanded}
+              endIcon={
+                <ExpandMoreIcon
+                  sx={{
+                    transform: expanded ? "rotate(180deg)" : "none",
+                    transition: "transform 0.25s ease",
+                  }}
+                />
+              }
               sx={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 1.5,
-                px: 2.5,
-                py: 2,
-                backgroundColor: "#fee2e2",
-                borderRadius: 3,
-                border: "1px solid #fca5a5",
-                width: "100%",
+                borderRadius: 1.5,
+                textTransform: "none",
+                fontWeight: 600,
+                color: "#029739",
+                fontSize: "14px",
+                "&:hover": { backgroundColor: "#E8F6ED" },
               }}
             >
-              <CloseIcon
-                sx={{
-                  color: "#dc2626",
-                  fontSize: 18,
-                  mt: "2px",
-                  flexShrink: 0,
-                }}
-              />
-              <Box>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: "#991b1b",
-                    fontWeight: 600,
-                    textTransform: "uppercase",
-                    letterSpacing: 0.5,
-                    display: "block",
-                    lineHeight: 1.2,
-                    mb: 0.5,
-                  }}
-                >
-                  Motivo de rechazo
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: "#b91c1c", lineHeight: 1.5 }}
-                >
-                  {error}
-                </Typography>
-              </Box>
-            </Box>
+              {expanded ? "Ocultar detalle" : "Ver detalle"}
+            </Button>
           )}
+        </Box>
 
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexDirection: { xs: "column", md: "row" },
-              gap: 2,
-            }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              {created_at
-                ? `Fecha: ${new Date(created_at).toLocaleDateString("es-MX")}`
-                : ""}
-            </Typography>
-
-            {showActions && (aprobacion === "en_espera" || !aprobacion) && (
+        {tieneVariosProductos && !expanded && (
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            {productosVisibles.map((item, index) => (
               <Box
+                key={index}
                 sx={{
-                  display: "flex",
-                  gap: 2,
-                  flexWrap: "wrap",
-                  width: { xs: "100%", md: "auto" },
+                  px: 1.75,
+                  py: 0.5,
+                  borderRadius: "50px",
+                  backgroundColor: "#FA7B0A",
+                  color: "#FFFFFF",
+                  fontSize: "13px",
+                  fontWeight: 400,
                 }}
               >
-                <Button
-                  variant="contained"
-                  color="warning"
-                  startIcon={<CheckIcon />}
-                  onClick={() => onAprobar?.(transferencia_id)}
-                  sx={{
-                    borderRadius: 3,
-                    textTransform: "none",
-                    px: 3,
-                    flex: { xs: 1, md: "unset" },
-                  }}
-                >
-                  Aprobar
-                </Button>
-
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<CloseIcon />}
-                  onClick={() => onRechazar?.(transferencia_id)}
-                  sx={{
-                    borderRadius: 3,
-                    textTransform: "none",
-                    px: 3,
-                    flex: { xs: 1, md: "unset" },
-                  }}
-                >
-                  Rechazar
-                </Button>
+                {item.cantidad} {item.unit} {item.nombre}
+              </Box>
+            ))}
+            {restantes > 0 && (
+              <Box
+                sx={{
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: "50px",
+                  border: "1px dashed #A3A3A3",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  color: "#737373",
+                }}
+              >
+                +{restantes} más
               </Box>
             )}
           </Box>
+        )}
+
+        {/* ACCORDION DESPLEGABLE DE PRODUCTOS */}
+        {tieneVariosProductos && (
+          <Collapse in={expanded} timeout="auto" unmountOnExit>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                width: "100%",
+                padding: "8px 16px",
+                backgroundColor: "#F9FAFB",
+                borderRadius: "12px",
+                border: "1px solid #F3F4F6",
+              }}
+            >
+              {items.map((item, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: 2,
+                    py: 1.25,
+                    borderBottom:
+                      index !== items.length - 1 ? "1px solid #F3F4F6" : "none",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      display: "flex",
+                      alignItems: "baseline",
+                      gap: 1.25,
+                      fontSize: "15px",
+                      fontWeight: 500,
+                      color: "#171717",
+                    }}
+                  >
+                    <Box
+                      component="span"
+                      sx={{ color: "#1F2937", fontWeight: 700 }}
+                    >
+                      •
+                    </Box>
+                    {item.nombre}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: "15px",
+                      fontWeight: 500,
+                      color: "#1F2937",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {item.cantidad} {item.unit}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Collapse>
+        )}
+
+        {/* MOTIVO DE RECHAZO */}
+        {(aprobacion === "denegado" ||
+          estadoActual === "FALLIDO" ||
+          estadoActual === "denegado") &&
+          error && (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.5,
+                padding: "16px",
+                backgroundColor: "#F9FAFB",
+                borderRadius: "12px",
+                border: "1px solid #F3F4F6",
+                width: "100%",
+                boxSizing: "border-box",
+                mt: 1,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#64748B",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                MOTIVO DE RECHAZO
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: "14px",
+                  color: "#334155",
+                  fontWeight: 500,
+                }}
+              >
+                {error}
+              </Typography>
+            </Box>
+          )}
+
+        {/* FOOTER */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            width: "100%",
+            marginTop: 1,
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: "14px",
+              color: "#A3A3A3",
+              fontWeight: 500,
+            }}
+          >
+            {created_at
+              ? `Fecha: ${new Date(created_at).toISOString().split("T")[0]}`
+              : "Fecha: —"}
+          </Typography>
+
+          {showActions && (aprobacion === "en_espera" || !aprobacion) && (
+            <Box sx={{ display: "flex", gap: "12px" }}>
+              <Button
+                variant="outlined"
+                startIcon={<CloseIcon />}
+                onClick={() => onRechazar?.(solicitud)}
+                sx={{
+                  borderColor: "#E7E5E4",
+                  color: "#44403C",
+                  borderRadius: "12px",
+                  minWidth: "160px",
+                  paddingX: "20px",
+                  paddingY: "8px",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                  "&:hover": {
+                    borderColor: "#A8A29E",
+                    backgroundColor: "#F5F5F4",
+                  },
+                }}
+              >
+                Rechazar
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<CheckIcon />}
+                onClick={() => onAprobar?.(transferencia_id)}
+                sx={{
+                  backgroundColor: "#029739",
+                  color: "#FFFFFF",
+                  borderRadius: "12px",
+                  minWidth: "160px",
+                  paddingX: "20px",
+                  paddingY: "8px",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                  boxShadow: "none",
+                  "&:hover": {
+                    backgroundColor: "#15803D",
+                    boxShadow: "none",
+                  },
+                }}
+              >
+                Aprobar
+              </Button>
+            </Box>
+          )}
         </Box>
       </CardContent>
     </Card>

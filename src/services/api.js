@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
-const CURRENT_NODE = import.meta.env.VITE_CURRENT_NODE;
+export const CURRENT_NODE = import.meta.env.VITE_CURRENT_NODE;
 
 const NODES = {
   comondu: "100.82.181.5:3001",
