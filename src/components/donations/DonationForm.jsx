@@ -1,372 +1,543 @@
-import { useState, useEffect } from "react";
-import {Dialog,DialogContent,Typography,Box,TextField,Button,MenuItem,Alert,} from "@mui/material";
+import { useState, useEffect, useRef } from "react";
+import {
+  Dialog,
+  Typography,
+  Box,
+  TextField,
+  Button,
+  IconButton,
+  MenuItem,
+  Alert,
+} from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
-import {getCategories,createDonacion} from "../../services/api";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import AddIcon from "@mui/icons-material/Add";
+import { getCategories, createDonacion } from "../../services/api";
+
+const textFieldStyle = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "12px",
+    "&.Mui-focused fieldset": {
+      borderColor: "#029739",
+    },
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: "#029739",
+  },
+};
+
+const rowFieldStyle = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "10px",
+    backgroundColor: "#FFFFFF",
+    "&.Mui-focused fieldset": {
+      borderColor: "#029739",
+    },
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: "#029739",
+  },
+};
+
+const errorKeys = {
+  producto_nombre: "producto_nombre",
+  categoria_id: "categoria_id",
+  cantidad: "cantidad",
+  unit: "unit",
+};
+
+const createNewProducto = () => ({
+  id: Date.now() + Math.random(),
+  producto_nombre: "",
+  categoria_id: "",
+  cantidad: "",
+  unit: "",
+});
 
 const DonationForm = ({ open, setOpen, onSuccess }) => {
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
-  const [newCategory, setNewCategory] = useState("");
-  const [categoryLoading, setCategoryLoading] = useState(false);
-  const [categoryError, setCategoryError] = useState("");
   const [errors, setErrors] = useState({});
 
-  const [form, setForm] = useState({
-    donante_nombre: "",
-    producto_nombre: "",
-    categoria_id: "",
-    cantidad: "",
-    unit: "",
-  });
+  const [form, setForm] = useState({ donante_nombre: "" });
+  const [productos, setProductos] = useState([createNewProducto()]);
+  const [focusId, setFocusId] = useState(null);
+
+  const listEndRef = useRef(null);
+  const prevCount = useRef(1);
 
   useEffect(() => {
     if (!open) return;
-    setError(null);
-    setSuccess(false);
+
+    let activo = true;
+
     getCategories()
-      .then(setCategorias)
-      .catch(() => setError("Error al cargar categorías."));
+      .then((data) => {
+        if (activo) setCategorias(data);
+      })
+      .catch(() => {
+        if (activo) setError("Error al cargar categorías.");
+      });
+
+    return () => {
+      activo = false;
+    };
   }, [open]);
+
+  useEffect(() => {
+    if (productos.length > prevCount.current) {
+      listEndRef.current?.scrollIntoView({
+        block: "nearest",
+        behavior: "smooth",
+      });
+    }
+    prevCount.current = productos.length;
+  }, [productos.length]);
 
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleAddProducto = () => {
+    const nuevo = createNewProducto();
+    setProductos((prev) => [...prev, nuevo]);
+    setFocusId(nuevo.id);
+  };
+
+  const handleRemoveProducto = (id) => {
+    setProductos((prev) => prev.filter((p) => p.id !== id));
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[`producto_nombre_${id}`];
+      delete copy[`categoria_id_${id}`];
+      delete copy[`cantidad_${id}`];
+      delete copy[`unit_${id}`];
+      return copy;
+    });
+  };
+
+  const handleChangeProducto = (id, field, value) => {
+    setProductos((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, [field]: value } : p)),
+    );
+    setErrors((prev) => ({ ...prev, [`${errorKeys[field]}_${id}`]: "" }));
+  };
+
+  const handleCantidadKeyDown = (e, prod) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (prod.producto_nombre.trim() && prod.categoria_id && prod.cantidad) {
+      handleAddProducto();
+    }
+  };
 
   const handleClose = () => {
     if (loading) return;
     setOpen(false);
     setError(null);
     setSuccess(false);
-    setForm({
-      donante_nombre: "",
-      producto_nombre: "",
-      categoria_id: "",
-      cantidad: "",
-      unit: "",
-    });
+    setErrors({});
+    setFocusId(null);
+    setForm({ donante_nombre: "" });
+    setProductos([createNewProducto()]);
   };
 
   const handleSubmit = async () => {
-  if (loading) return;
+    if (loading) return;
 
-  const newErrors = {};
+    const newErrors = {};
 
-  if (!form.donante_nombre.trim()) {
-    newErrors.donante_nombre = "Ingresa el nombre del donante";
-  }
+    if (!form.donante_nombre.trim()) {
+      newErrors.donante_nombre = "Ingresa el nombre del donante";
+    }
 
-  if (!form.producto_nombre.trim()) {
-    newErrors.producto_nombre = "Ingresa el nombre del producto";
-  }
+    productos.forEach((p) => {
+      if (!p.producto_nombre.trim()) {
+        newErrors[`producto_nombre_${p.id}`] = "Ingresa el producto";
+      }
 
-  if (!form.cantidad) {
-    newErrors.cantidad = "Ingresa una cantidad";
-  } else if (Number(form.cantidad) <= 0) {
-    newErrors.cantidad = "Debe ser mayor a 0";
-  } else if (!Number.isInteger(Number(form.cantidad))) {
-    newErrors.cantidad = "Solo números enteros";
-  }
+      if (!p.categoria_id) {
+        newErrors[`categoria_id_${p.id}`] = "Selecciona";
+      }
 
-  if (!form.unit) {
-    newErrors.unit = "Selecciona una unidad";
-  }
+      if (!p.cantidad) {
+        newErrors[`cantidad_${p.id}`] = "Requerida";
+      } else if (Number(p.cantidad) <= 0) {
+        newErrors[`cantidad_${p.id}`] = "Mayor a 0";
+      } else if (!Number.isInteger(Number(p.cantidad))) {
+        newErrors[`cantidad_${p.id}`] = "Solo enteros";
+      }
 
-  if (Object.keys(newErrors).length > 0) {
-    setErrors(newErrors);
-    setError("Corrige los campos marcados.");
-    return;
-  }
-
-  setErrors({});
-  setLoading(true);
-  setError(null);
-
-  try {
-    await createDonacion({
-      donante: form.donante_nombre.trim(),
-      producto: form.producto_nombre.trim(),
-      cantidad: Number(form.cantidad),
-      unit: form.unit,
-      categoria_id: form.categoria_id
-        ? Number(form.categoria_id)
-        : null,
+      if (!p.unit) {
+        newErrors[`unit_${p.id}`] = "Selecciona";
+      }
     });
 
-    setSuccess(true);
-    onSuccess?.();
-    setTimeout(handleClose, 1200);
-  } catch {
-    setError("Error al registrar la donación.");
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const handleCreateCategory = async () => {
-    if (!newCategory.trim()) {
-      setCategoryError("Ingresa un nombre");
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
+    setErrors({});
+    setError(null);
+    setLoading(true);
+
     try {
-      setCategoryLoading(true);
-      setCategoryError("");
+      const results = await Promise.allSettled(
+        productos.map((p) =>
+          createDonacion({
+            donante: form.donante_nombre.trim(),
+            producto: p.producto_nombre.trim(),
+            cantidad: Number(p.cantidad),
+            unit: p.unit,
+            categoria_id: Number(p.categoria_id),
+          }),
+        ),
+      );
 
-      const category = await createCategory(newCategory.trim());
+      const fallidos = productos.filter(
+        (_, i) => results[i].status === "rejected",
+      );
 
-      setCategorias((prev) => [...prev, category]);
+      if (fallidos.length < productos.length) {
+        onSuccess?.();
+      }
 
-      setForm((prev) => ({
-        ...prev,
-        categoria_id: category.id,
-      }));
-
-      setNewCategory("");
-      setCategoryModalOpen(false);
-    } catch (error) {
-      console.error(error);
-      setCategoryError("Error creando categoría");
+      if (fallidos.length === 0) {
+        setSuccess(true);
+        setTimeout(handleClose, 800);
+      } else {
+        setProductos(fallidos);
+        setError(
+          `No se pudieron registrar ${fallidos.length} de ${productos.length} productos.`,
+        );
+      }
+    } catch {
+      setError("Error al registrar la donación.");
     } finally {
-      setCategoryLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <>
-      <Dialog
-        open={open}
-        onClose={loading ? undefined : handleClose}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: "32px", padding: 2 } }}
+    <Dialog
+      open={open}
+      onClose={loading ? undefined : handleClose}
+      fullWidth
+      maxWidth="md"
+      PaperProps={{
+        sx: {
+          borderRadius: "12px",
+          width: "100%",
+          maxWidth: "760px",
+          margin: "16px",
+          maxHeight: "calc(100% - 32px)",
+          boxShadow: "0px 8px 24px rgba(0, 0, 0, 0.1)",
+          overflow: "hidden",
+        },
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          padding: "32px 40px 24px 24px",
+          gap: "8px",
+          boxSizing: "border-box",
+        }}
       >
-        <DialogContent>
-          <Typography
-            variant="h4"
-            sx={{ fontWeight: "bold", color: "#171717", marginBottom: 4 }}
-          >
-            Registrar donación
-          </Typography>
+        <Typography
+          sx={{
+            fontWeight: 700,
+            fontSize: "24px",
+            color: "#171717",
+            lineHeight: 1.2,
+          }}
+        >
+          Registrar donación
+        </Typography>
+      </Box>
 
+      {(error || success) && (
+        <Box
+          sx={{
+            padding: "0px 24px 16px 24px",
+            width: "100%",
+            boxSizing: "border-box",
+          }}
+        >
           {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
+            <Alert
+              severity="error"
+              sx={{ width: "100%", borderRadius: "12px" }}
+            >
               {error}
             </Alert>
           )}
           {success && (
-            <Alert severity="success" sx={{ mb: 3 }}>
+            <Alert
+              severity="success"
+              sx={{ width: "100%", borderRadius: "12px" }}
+            >
               ¡Donación registrada!
             </Alert>
           )}
+        </Box>
+      )}
 
-          <TextField
-  fullWidth
-  label="Donante"
-  name="donante_nombre"
-  value={form.donante_nombre}
-  onChange={(e) => {
-    handleChange(e);
-
-    setErrors((prev) => ({
-      ...prev,
-      donante_nombre: "",
-    }));
-  }}
-  error={!!errors.donante_nombre}
-  helperText={errors.donante_nombre}
-  sx={{ marginBottom: 3 }}
-/>
-<TextField
-  fullWidth
-  label="Producto"
-  placeholder="Alimento/producto"
-  name="producto_nombre"
-  value={form.producto_nombre}
-  onChange={(e) => {
-    handleChange(e);
-
-    setErrors((prev) => ({
-      ...prev,
-      producto_nombre: "",
-    }));
-  }}
-  error={!!errors.producto_nombre}
-  helperText={errors.producto_nombre}
-  sx={{ marginBottom: 3 }}
-/>
-
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "flex-end",
-              marginBottom: 1,
-            }}
-          >
-            
-          </Box>
-
-          <TextField
-            fullWidth
-            select
-            label="Categoría"
-            name="categoria_id"
-            value={form.categoria_id}
-            onChange={handleChange}
-            sx={{ marginBottom: 3 }}
-          >
-            <MenuItem value="">Sin categoría</MenuItem>
-            {categorias.map((cat) => (
-              <MenuItem key={cat.id} value={cat.id}>
-                {cat.nombre}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 2,
-              marginBottom: 4,
-            }}
-          >
-           <TextField
-  fullWidth
-  label="Cantidad"
-  type="number"
-  name="cantidad"
-  value={form.cantidad}
-  onChange={(e) => {
-    handleChange(e);
-
-    setErrors((prev) => ({
-      ...prev,
-      cantidad: "",
-    }));
-  }}
-  error={!!errors.cantidad}
-  helperText={errors.cantidad}
-  inputProps={{ min: 1 }}
-/>
-           <TextField
-  fullWidth
-  select
-  label="Unidad"
-  name="unit"
-  value={form.unit}
-  onChange={(e) => {
-    handleChange(e);
-
-    setErrors((prev) => ({
-      ...prev,
-      unit: "",
-    }));
-  }}
-  error={!!errors.unit}
-  helperText={errors.unit}
->
-  <MenuItem value="pz">Pz</MenuItem>
-  <MenuItem value="kg">Kg</MenuItem>
-  <MenuItem value="gr">Gramos</MenuItem>
-  <MenuItem value="L">Litros</MenuItem>
-  <MenuItem value="ml">Mililitros</MenuItem>
-</TextField>
-          </Box>
-
-          <Box sx={{ display: "flex", gap: 2 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={handleClose}
-              sx={{
-                borderRadius: "16px",
-                paddingY: 1.5,
-                textTransform: "none",
-              }}
-            >
-              Cancelar
-            </Button>
-            <LoadingButton
-              fullWidth
-              variant="contained"
-              loading={loading}
-              disabled={loading}
-              onClick={handleSubmit}
-              sx={{
-                borderRadius: "16px",
-                paddingY: 1.5,
-                textTransform: "none",
-                backgroundColor: "#F97316",
-                "&:hover": { backgroundColor: "#EA580C" },
-              }}
-            >
-              Registrar donación
-            </LoadingButton>
-          </Box>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={categoryModalOpen}
-        onClose={() => {
-          setCategoryModalOpen(false);
-          setNewCategory("");
-          setCategoryError("");
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          padding: "8px 24px 16px 24px",
+          gap: 2,
+          width: "100%",
+          flex: "1 1 auto",
+          minHeight: 0,
+          overflowY: "auto",
+          boxSizing: "border-box",
         }}
-        maxWidth="xs"
-        fullWidth
       >
-        <DialogContent>
-          <Typography variant="h6" sx={{ fontWeight: "bold", mb: 3 }}>
-            Nueva categoría
+        <TextField
+          fullWidth
+          label="Donante"
+          name="donante_nombre"
+          value={form.donante_nombre}
+          onChange={(e) => {
+            handleChange(e);
+            setErrors((prev) => ({ ...prev, donante_nombre: "" }));
+          }}
+          error={!!errors.donante_nombre}
+          helperText={errors.donante_nombre}
+          sx={textFieldStyle}
+        />
+
+        <Box
+          sx={{
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+          }}
+        >
+          <Typography
+            sx={{ fontWeight: 700, fontSize: "16px", color: "#171717" }}
+          >
+            Productos a donar
           </Typography>
 
-          <TextField
-            fullWidth
-            label="Nombre"
-            value={newCategory}
-            onChange={(e) => {
-              setNewCategory(e.target.value);
-              setCategoryError("");
-            }}
-            error={!!categoryError}
-            helperText={categoryError}
-            sx={{ mb: 3 }}
-          />
-
-          <Box sx={{ display: "flex", gap: 2 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={() => {
-                setCategoryModalOpen(false);
-                setNewCategory("");
-                setCategoryError("");
-              }}
-            >
-              Cancelar
-            </Button>
-
-            <LoadingButton
-              fullWidth
-              loading={categoryLoading}
-              disabled={categoryLoading}
-              onClick={handleCreateCategory}
-              variant="contained"
+          {productos.map((prod, index) => (
+            <Box
+              key={prod.id}
               sx={{
-                backgroundColor: "#F97316",
-                "&:hover": { backgroundColor: "#EA580C" },
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr 1fr 40px",
+                  sm: "28px 1.6fr 1.2fr 0.8fr 1fr 40px",
+                },
+                gap: "8px",
+                alignItems: "flex-start",
+                width: "100%",
+                boxSizing: "border-box",
+                backgroundColor: "#F9FAFB",
+                border: "1px solid #E7E5E4",
+                borderRadius: "12px",
+                padding: "10px",
               }}
             >
-              Agregar categoría
-            </LoadingButton>
-          </Box>
-        </DialogContent>
-      </Dialog>
-    </>
+              <Typography
+                sx={{
+                  display: { xs: "none", sm: "block" },
+                  textAlign: "center",
+                  fontWeight: 700,
+                  fontSize: "14px",
+                  color: "#737373",
+                  mt: "9px",
+                }}
+              >
+                {index + 1}
+              </Typography>
+
+              <TextField
+                fullWidth
+                size="small"
+                autoFocus={prod.id === focusId}
+                label="Producto"
+                placeholder="Alimento/producto"
+                value={prod.producto_nombre}
+                onChange={(e) =>
+                  handleChangeProducto(
+                    prod.id,
+                    "producto_nombre",
+                    e.target.value,
+                  )
+                }
+                error={!!errors[`producto_nombre_${prod.id}`]}
+                helperText={errors[`producto_nombre_${prod.id}`]}
+                sx={{
+                  ...rowFieldStyle,
+                  gridColumn: { xs: "1 / 3", sm: "auto" },
+                }}
+              />
+
+              <TextField
+                fullWidth
+                select
+                size="small"
+                label="Categoría"
+                value={prod.categoria_id}
+                onChange={(e) =>
+                  handleChangeProducto(prod.id, "categoria_id", e.target.value)
+                }
+                error={!!errors[`categoria_id_${prod.id}`]}
+                helperText={errors[`categoria_id_${prod.id}`]}
+                sx={{
+                  ...rowFieldStyle,
+                  gridColumn: { xs: "1 / -1", sm: "auto" },
+                }}
+              >
+                {categorias.map((cat) => (
+                  <MenuItem key={cat.id} value={cat.id}>
+                    {cat.nombre}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              <TextField
+                fullWidth
+                size="small"
+                label="Cantidad"
+                type="number"
+                value={prod.cantidad}
+                onChange={(e) =>
+                  handleChangeProducto(prod.id, "cantidad", e.target.value)
+                }
+                onKeyDown={(e) => handleCantidadKeyDown(e, prod)}
+                error={!!errors[`cantidad_${prod.id}`]}
+                helperText={errors[`cantidad_${prod.id}`]}
+                inputProps={{ min: 1 }}
+                sx={rowFieldStyle}
+              />
+
+              <TextField
+                fullWidth
+                select
+                size="small"
+                label="Unidad"
+                value={prod.unit}
+                onChange={(e) =>
+                  handleChangeProducto(prod.id, "unit", e.target.value)
+                }
+                error={!!errors[`unit_${prod.id}`]}
+                helperText={errors[`unit_${prod.id}`]}
+                sx={rowFieldStyle}
+              >
+                <MenuItem value="pz">Pz</MenuItem>
+                <MenuItem value="kg">Kg</MenuItem>
+                <MenuItem value="gr">Gramos</MenuItem>
+                <MenuItem value="L">Litros</MenuItem>
+                <MenuItem value="ml">Mililitros</MenuItem>
+              </TextField>
+
+              <IconButton
+                aria-label="Quitar producto"
+                onClick={() => handleRemoveProducto(prod.id)}
+                disabled={productos.length === 1}
+                sx={{
+                  color: "#A3A3A3",
+                  borderRadius: "10px",
+                  gridColumn: { xs: 3, sm: "auto" },
+                  gridRow: { xs: 1, sm: "auto" },
+                  "&:hover": {
+                    backgroundColor: "#E8F6ED",
+                    color: "#C62828",
+                  },
+                }}
+              >
+                <DeleteOutlineIcon />
+              </IconButton>
+            </Box>
+          ))}
+
+          <Button
+            fullWidth
+            startIcon={<AddIcon />}
+            onClick={handleAddProducto}
+            sx={{
+              textTransform: "none",
+              color: "#029739",
+              fontWeight: 600,
+              border: "1.5px dashed #029739",
+              borderRadius: "12px",
+              paddingY: "13px",
+              mt: "2px",
+              "&:hover": {
+                backgroundColor: "#E8F6ED",
+                border: "1.5px dashed #029739",
+              },
+            }}
+          >
+            Agregar otro producto
+          </Button>
+
+          <div ref={listEndRef} />
+        </Box>
+      </Box>
+
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2,
+          width: "100%",
+          padding: "16px 24px 24px 24px",
+          boxSizing: "border-box",
+        }}
+      >
+        <Button
+          fullWidth
+          variant="outlined"
+          onClick={handleClose}
+          disabled={loading}
+          sx={{
+            borderRadius: "12px",
+            paddingY: 1.2,
+            textTransform: "none",
+            fontWeight: 400,
+            borderColor: "#E7E5E4",
+            color: "#44403C",
+          }}
+        >
+          Cancelar
+        </Button>
+
+        <LoadingButton
+          fullWidth
+          variant="contained"
+          loading={loading}
+          disabled={loading}
+          onClick={handleSubmit}
+          sx={{
+            borderRadius: "12px",
+            paddingY: 1.2,
+            textTransform: "none",
+            fontWeight: 600,
+            backgroundColor: "#029739",
+            boxShadow: "none",
+            "&:hover": {
+              backgroundColor: "#15803d",
+              boxShadow: "none",
+            },
+          }}
+        >
+          {productos.length > 1
+            ? `Registrar donación (${productos.length})`
+            : "Registrar donación"}
+        </LoadingButton>
+      </Box>
+    </Dialog>
   );
 };
 
