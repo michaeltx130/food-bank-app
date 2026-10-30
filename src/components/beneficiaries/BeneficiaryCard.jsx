@@ -1,118 +1,422 @@
 import { useState } from "react";
-import { Box, Typography, Button, Chip, Collapse } from "@mui/material";
-import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
-import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
-import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
+import {
+  Box,
+  Typography,
+  Button,
+  Collapse,
+  IconButton,
+  Pagination,
+} from "@mui/material";
+
+import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
+import Inventory2Icon from "@mui/icons-material/Inventory2";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+
+const ITEMS_PER_PAGE = 3;
+
+const formatearFechaRegistro = (valor) => {
+  if (!valor) {
+    return "No disponible";
+  }
+
+  const fecha = new Date(valor);
+
+  if (Number.isNaN(fecha.getTime())) {
+    return "No disponible";
+  }
+
+  return fecha.toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
 
 const BeneficiaryCard = ({ family, onNuevaEntrega }) => {
   const [expanded, setExpanded] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+
+  const historyItems = Array.isArray(family.history) ? family.history : [];
+
+  const totalHistoryPages = Math.ceil(historyItems.length / ITEMS_PER_PAGE);
+
+  const paginaActual = Math.min(historyPage, Math.max(totalHistoryPages, 1));
+
+  const startIndex = (paginaActual - 1) * ITEMS_PER_PAGE;
+
+  const currentHistory = historyItems.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE,
+  );
+
+  const fechaRegistro =
+    family.created_at ??
+    family.fecha_registro ??
+    family.fechaRegistro ??
+    family.fecha_creacion ??
+    family.createdAt ??
+    family.familia?.created_at ??
+    family.familia?.fecha_registro ??
+    null;
+
+  const cantidadMiembros =
+    family.familia?.cantidad_miembros ?? family.members ?? 0;
+
+  const cantidadEntregas = family.deliveries ?? family.entregas?.length ?? 0;
 
   return (
-    <Box sx={{ backgroundColor: "#ffffff", borderRadius: 4, border: "1px solid #e5e7eb", overflow: "hidden" }}>
-      <Box sx={{ display: "flex", alignItems: "center", padding: "16px 24px", gap: 2 }}>
-        <Box sx={{ backgroundColor: "#fff4ed", borderRadius: 3, padding: "10px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <PeopleAltOutlinedIcon sx={{ color: "#e07a2f" }} />
-        </Box>
-
-        <Box sx={{ flex: 1 }}>
-          <Typography fontWeight="bold" fontSize="16px">{family.nombre}</Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <PhoneOutlinedIcon sx={{ fontSize: 14, color: "#6b7280" }} />
-            <Typography fontSize="13px" color="text.secondary">
-              {family.familia?.telefono || "Sin teléfono"}
-            </Typography>
-          </Box>
-        </Box>
-
-        <Box sx={{ display: "flex", alignItems: "center", gap: 3, marginRight: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
-            <PeopleAltOutlinedIcon sx={{ fontSize: 18, color: "#6b7280" }} />
-            <Typography fontSize="14px" color="text.secondary">
-              {family.familia?.cantidad_miembros ?? 0} miembros
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
-            <LocalShippingOutlinedIcon sx={{ fontSize: 18, color: "#6b7280" }} />
-            <Typography fontSize="14px" color="text.secondary">
-              {family.entregas?.length ?? 0} entregas
-            </Typography>
-          </Box>
-        </Box>
-
-        <Button
-          variant="contained" color="warning"
-          onClick={() => onNuevaEntrega(family)}
-          sx={{ borderRadius: 3, textTransform: "none", paddingX: 2, marginRight: 1 }}
+    <Box
+      sx={{
+        backgroundColor: "#FFFFFF",
+        borderRadius: "12px",
+        border: "1px solid #E5E7EB",
+        boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.05)",
+        overflow: "hidden",
+        width: "100%",
+      }}
+    >
+      {/* ENCABEZADO DE LA TARJETA */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "20px 24px",
+          gap: 2,
+          flexWrap: "wrap",
+        }}
+      >
+        <Typography
+          sx={{
+            fontWeight: 700,
+            fontSize: "18px",
+            color: "#1F2937",
+          }}
         >
-          Nueva entrega
-        </Button>
-        <Box onClick={() => setExpanded(!expanded)} sx={{ cursor: "pointer", color: "#6b7280", display: "flex", alignItems: "center" }}>
-          {expanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          {family.nombre || family.name}
+        </Typography>
+
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: {
+              xs: 1.5,
+              sm: 3,
+            },
+            flexWrap: "wrap",
+          }}
+        >
+          {/* MIEMBROS */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
+            <PeopleAltIcon
+              sx={{
+                fontSize: 18,
+                color: "#F97316",
+              }}
+            />
+
+            <Typography
+              sx={{
+                fontSize: "14px",
+                color: "#1F2937",
+              }}
+            >
+              {cantidadMiembros} miembros
+            </Typography>
+          </Box>
+
+          {/* ENTREGAS */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
+            <Inventory2Icon
+              sx={{
+                fontSize: 18,
+                color: "#F97316",
+              }}
+            />
+
+            <Typography
+              sx={{
+                fontSize: "14px",
+                color: "#1F2937",
+              }}
+            >
+              {cantidadEntregas} entregas
+            </Typography>
+          </Box>
+
+          {/* NUEVA ENTREGA */}
+          <Button
+            variant="contained"
+            onClick={() => onNuevaEntrega(family)}
+            sx={{
+              backgroundColor: "#029739",
+              color: "#FFFFFF",
+              borderRadius: "12px",
+              textTransform: "none",
+              fontWeight: 500,
+              fontSize: "12px",
+              px: "16px",
+              py: "8px",
+              boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.05)",
+              "&:hover": {
+                backgroundColor: "#15803d",
+                boxShadow: "none",
+              },
+            }}
+          >
+            Nueva Entrega
+          </Button>
+
+          {/* EXPANDIR / CONTRAER */}
+          <IconButton
+            aria-label={expanded ? "Ocultar detalles" : "Mostrar detalles"}
+            onClick={() => setExpanded(!expanded)}
+            sx={{
+              color: "#4B5563",
+            }}
+          >
+            {expanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          </IconButton>
         </Box>
       </Box>
 
+      {/* CONTENIDO DESPLEGABLE */}
       <Collapse in={expanded}>
-        <Box sx={{ padding: "0 24px 24px", borderTop: "1px solid #f3f4f6" }}>
-          <Box sx={{ display: "flex", gap: 6, marginTop: 2, marginBottom: 3 }}>
+        <Box
+          sx={{
+            padding: "24px",
+            borderTop: "1px solid #F3F4F6",
+            display: "flex",
+            flexDirection: "column",
+            gap: "24px",
+          }}
+        >
+          {/* INFORMACIÓN DE LA FAMILIA */}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(3, 1fr)",
+              },
+              gap: 3,
+            }}
+          >
+            {/* DIRECCIÓN */}
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 1 }}>
-                Dirección
+              <Typography
+                sx={{
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  color: "#9CA3AF",
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                  mb: 0.5,
+                }}
+              >
+                DIRECCIÓN
               </Typography>
-              <Typography fontSize="14px" mt={0.5}>
-                {family.familia?.direccion || "Sin dirección"}
+
+              <Typography
+                sx={{
+                  fontSize: "14px",
+                  color: "#1F2937",
+                }}
+              >
+                {family.familia?.direccion ??
+                  family.direccion ??
+                  "Sin dirección"}
               </Typography>
             </Box>
+
+            {/* TELÉFONO */}
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 1 }}>
-                Teléfono
+              <Typography
+                sx={{
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  color: "#9CA3AF",
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                  mb: 0.5,
+                }}
+              >
+                TELÉFONO
               </Typography>
-              <Typography fontSize="14px" mt={0.5}>
-                {family.familia?.telefono || "Sin teléfono"}
+
+              <Typography
+                sx={{
+                  fontSize: "14px",
+                  color: "#1F2937",
+                }}
+              >
+                {family.familia?.telefono ?? family.telefono ?? "Sin teléfono"}
               </Typography>
             </Box>
+
+            {/* FECHA DE REGISTRO */}
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 1 }}>
-                Miembros
+              <Typography
+                sx={{
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  color: "#9CA3AF",
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                  mb: 0.5,
+                }}
+              >
+                FECHA DE REGISTRO
               </Typography>
-              <Typography fontSize="14px" mt={0.5}>
-                {family.familia?.cantidad_miembros ?? 0}
+
+              <Typography
+                sx={{
+                  fontSize: "14px",
+                  color: "#1F2937",
+                }}
+              >
+                {formatearFechaRegistro(fechaRegistro)}
               </Typography>
             </Box>
           </Box>
 
-          <Typography variant="caption" fontWeight="bold" sx={{ textTransform: "uppercase", letterSpacing: 1 }}>
-            Historial de Entregas
-          </Typography>
+          {/* HISTORIAL DE ENTREGAS */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: "12px",
+                fontWeight: 700,
+                color: "#1F2937",
+                letterSpacing: "1.2px",
+                textTransform: "uppercase",
+              }}
+            >
+              HISTORIAL DE ENTREGAS
+            </Typography>
 
-          <Box sx={{ marginTop: 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
-            {family.entregas?.length === 0 && (
-              <Typography fontSize="14px" color="text.secondary">Sin entregas registradas.</Typography>
-            )}
-            {family.entregas?.map((e, i) => (
-              <Box
-                key={i}
+            {historyItems.length === 0 ? (
+              <Typography
                 sx={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "10px 16px", backgroundColor: "#f9fafb", borderRadius: 2,
-                  cursor: "pointer", "&:hover": { backgroundColor: "#f3f4f6" },
+                  fontSize: "14px",
+                  color: "#6B7280",
                 }}
               >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Typography fontSize="14px" fontWeight="500">
-                    {new Date(e.fecha).toLocaleDateString("es-MX")}
-                  </Typography>
-                  <Chip
-                    label={`${e.cantidad} ${e.producto?.nombre ?? "producto"}`}
-                    size="small"
-                    sx={{ backgroundColor: "#e8f5e9", color: "#2e7d32", fontSize: "12px" }}
-                  />
-                </Box>
-                <ChevronRightIcon sx={{ color: "#9ca3af", fontSize: 18 }} />
-              </Box>
-            ))}
+                Sin entregas registradas.
+              </Typography>
+            ) : (
+              <>
+                {currentHistory.map((entrega, index) => (
+                  <Box
+                    key={entrega.id ?? index}
+                    sx={{
+                      display: "flex",
+                      alignItems: {
+                        xs: "flex-start",
+                        sm: "center",
+                      },
+                      flexDirection: {
+                        xs: "column",
+                        sm: "row",
+                      },
+                      padding: "16px 20px",
+                      gap: {
+                        xs: 1.5,
+                        sm: 4,
+                      },
+                      backgroundColor: "#F9FAFB",
+                      borderRadius: "12px",
+                      width: "100%",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    {/* FECHA DE ENTREGA */}
+                    <Typography
+                      sx={{
+                        fontSize: "14px",
+                        color: "#1F2937",
+                        fontWeight: 500,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {entrega.date ?? "No disponible"}
+                    </Typography>
+
+                    {/* PRODUCTOS ENTREGADOS */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: "8px",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      {(entrega.items ?? []).map((item, itemIndex) => (
+                        <Box
+                          key={itemIndex}
+                          sx={{
+                            backgroundColor: "#F97316",
+                            color: "#FFFFFF",
+                            borderRadius: "50px",
+                            padding: "4px 12px",
+                            fontSize: "12px",
+                            fontWeight: 500,
+                            overflowWrap: "anywhere",
+                          }}
+                        >
+                          {item}
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                ))}
+
+                {/* PAGINACIÓN DEL HISTORIAL */}
+                {totalHistoryPages > 1 && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      mt: 1,
+                    }}
+                  >
+                    <Pagination
+                      count={totalHistoryPages}
+                      page={paginaActual}
+                      onChange={(_, value) => setHistoryPage(value)}
+                      size="small"
+                      sx={{
+                        "& .MuiPaginationItem-root.Mui-selected": {
+                          backgroundColor: "#029739",
+                          color: "#FFFFFF",
+                          "&:hover": {
+                            backgroundColor: "#15803d",
+                          },
+                        },
+                      }}
+                    />
+                  </Box>
+                )}
+              </>
+            )}
           </Box>
         </Box>
       </Collapse>
