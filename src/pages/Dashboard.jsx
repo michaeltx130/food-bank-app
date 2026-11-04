@@ -1,12 +1,18 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
+
 import MainLayout from "../components/layout/MainLayout";
 import { Box, Typography, Skeleton } from "@mui/material";
+
 import StatCard from "../components/dashboard/StatCard";
 import InfoPanel from "../components/dashboard/InfoPanel";
 import EmptyState from "../components/common/EmptyState";
+
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
+import DonutLargeIcon from '@mui/icons-material/DonutLarge';
+
 import { PieChart, LineChart } from "@mui/x-charts";
+
 import {
   getProducts,
   getBeneficiarios,
@@ -51,6 +57,7 @@ const Dashboard = () => {
         ...(solicitudesRecibidasData || []),
         ...(solicitudesEnviadasData || []),
       ];
+
       const solicitudesUnicas = [
         ...new Map(
           todasLasSolicitudes.map((s) => [s.transferencia_id || s.id, s]),
@@ -73,6 +80,7 @@ const Dashboard = () => {
     };
 
     const initialLoad = setTimeout(loadDashboardData, 0);
+
     const interval = setInterval(loadDashboardData, 10000);
 
     return () => {
@@ -81,10 +89,12 @@ const Dashboard = () => {
     };
   }, [fetchDashboardData]);
 
+  // PRODUCTOS CON BAJO STOCK
   const stockBajo = useMemo(() => {
     return products.filter((p) => p.cantidad > 0 && p.cantidad <= 10);
   }, [products]);
 
+  // SOLICITUDES PENDIENTES
   const solicitudesPendientes = useMemo(() => {
     return solicitudes.filter((s) => {
       const estaEnEspera =
@@ -99,13 +109,63 @@ const Dashboard = () => {
     });
   }, [solicitudes]);
 
-  //3 PRODUCTOS MÁS SOLICITADOS (BASADO EN ENTREGAS Y SOLICITUDES SALIENTES)
+  const solicitudesAgrupadas = useMemo(() => {
+    const VENTANA_MS = 10000;
+    const grupos = [];
+
+    [...solicitudesPendientes]
+      .sort(
+        (a, b) =>
+          new Date(b.created_at || b.fecha) - new Date(a.created_at || a.fecha),
+      )
+      .forEach((s) => {
+        const fecha = s.created_at || s.fecha;
+        const tiempo = new Date(fecha).getTime();
+        const sucursalSolicitante = s.origen;
+
+        let grupo = grupos.find(
+          (g) =>
+            g.origen === sucursalSolicitante &&
+            Math.abs(g.tiempo - tiempo) <= VENTANA_MS,
+        );
+
+        if (!grupo) {
+          grupo = {
+            id: `${sucursalSolicitante}_${fecha}`,
+            destino: s.destino,
+            origen: s.origen,
+            created_at: fecha,
+            tiempo,
+            aprobacion: s.aprobacion || s.estado,
+            error: s.error,
+            items: [],
+            rawIds: [],
+          };
+
+          grupos.push(grupo);
+        }
+
+        grupo.rawIds.push(s.transferencia_id || s.id);
+
+        grupo.items.push({
+          nombre: s.producto_nombre || s.producto?.nombre || "Producto",
+          cantidad: s.cantidad,
+          unit: s.producto?.unit || s.unit || "pz",
+        });
+      });
+
+    return grupos;
+  }, [solicitudesPendientes]);
+
+  // 3 PRODUCTOS MÁS SOLICITADOS
   const chartPieData = useMemo(() => {
     const conteoProductos = {};
 
     entregas.forEach((e) => {
       const nombreProd = e.producto?.nombre || e.producto_nombre || "Producto";
+
       const cant = Number(e.cantidad) || 1;
+
       conteoProductos[nombreProd] = (conteoProductos[nombreProd] || 0) + cant;
     });
 
@@ -124,7 +184,9 @@ const Dashboard = () => {
       if (estadoAprobado && esSalidaHaciaOtroNodo) {
         const nombreProd =
           s.producto_nombre || s.producto?.nombre || "Producto";
+
         const cant = Number(s.cantidad) || 1;
+
         conteoProductos[nombreProd] = (conteoProductos[nombreProd] || 0) + cant;
       }
     });
@@ -142,30 +204,42 @@ const Dashboard = () => {
       }));
   }, [entregas, solicitudes]);
 
-  // 2. ENTRADAS Y SALIDAS INTEGRALES (EXCLUSIVO SEMANA ACTUAL)
+  // ENTRADAS Y SALIDAS DE LA SEMANA ACTUAL
   const chartLineData = useMemo(() => {
     const entradas = [0, 0, 0, 0, 0, 0, 0];
     const salidas = [0, 0, 0, 0, 0, 0, 0];
 
     const ahora = new Date();
     const diaSemanaActual = ahora.getDay();
+
     const distanciaAlLunes = diaSemanaActual === 0 ? 6 : diaSemanaActual - 1;
 
     const inicioSemana = new Date(ahora);
+
     inicioSemana.setDate(ahora.getDate() - distanciaAlLunes);
+
     inicioSemana.setHours(0, 0, 0, 0);
 
     const obtenerIndiceSemanaActual = (fechaStr) => {
       if (!fechaStr) return -1;
+
       const f = new Date(fechaStr);
-      if (isNaN(f.getTime()) || f < inicioSemana) return -1;
+
+      if (isNaN(f.getTime()) || f < inicioSemana) {
+        return -1;
+      }
+
       const d = f.getDay();
+
       return d === 0 ? 6 : d - 1;
     };
 
     donaciones.forEach((d) => {
       const idx = obtenerIndiceSemanaActual(d.fecha || d.created_at);
-      if (idx !== -1) entradas[idx] += Number(d.cantidad) || 1;
+
+      if (idx !== -1) {
+        entradas[idx] += Number(d.cantidad) || 1;
+      }
     });
 
     products.forEach((p) => {
@@ -173,14 +247,21 @@ const Dashboard = () => {
 
       (p.movimientos || []).forEach((m) => {
         if (m.tipo !== "entrada") return;
+
         const idx = obtenerIndiceSemanaActual(m.fecha);
-        if (idx !== -1) entradas[idx] += Number(m.cantidad) || 1;
+
+        if (idx !== -1) {
+          entradas[idx] += Number(m.cantidad) || 1;
+        }
       });
     });
 
     entregas.forEach((e) => {
       const idx = obtenerIndiceSemanaActual(e.fecha || e.created_at);
-      if (idx !== -1) salidas[idx] += Number(e.cantidad) || 1;
+
+      if (idx !== -1) {
+        salidas[idx] += Number(e.cantidad) || 1;
+      }
     });
 
     solicitudes.forEach((t) => {
@@ -194,6 +275,7 @@ const Dashboard = () => {
 
       if (estadoAprobado) {
         const idx = obtenerIndiceSemanaActual(t.updated_at || t.created_at);
+
         if (idx !== -1) {
           const esEntrada =
             t.destino?.toLowerCase() === CURRENT_NODE?.toLowerCase();
@@ -226,30 +308,47 @@ const Dashboard = () => {
     <MainLayout>
       <Typography
         variant="h4"
-        sx={{ fontWeight: 700, mb: 2, color: "#171717" }}
+        sx={{
+          fontWeight: 700,
+          mb: 2,
+          color: "#171717",
+        }}
       >
         Dashboard
       </Typography>
 
+      {/* GRID PRINCIPAL */}
       <Box
         sx={{
           display: "grid",
           gridTemplateColumns: {
-            xs: "1fr",
-            lg: "1.2fr 0.8fr",
+            xs: "minmax(0, 1fr)",
+            lg: "minmax(0, 1.2fr) minmax(0, 0.8fr)",
           },
-          gap: 2,
+          gap: "16px",
           width: "100%",
+          minHeight: 0,
+          alignItems: "stretch",
         }}
       >
         {/* COLUMNA IZQUIERDA */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {/* StatCards */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            minWidth: 0,
+          }}
+        >
+          {/* STAT CARDS */}
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-              gap: 2,
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "1fr 1fr",
+              },
+              gap: "16px",
               width: "100%",
             }}
           >
@@ -259,6 +358,7 @@ const Dashboard = () => {
               value={products.filter((p) => p.cantidad > 0).length}
               description="productos totales"
             />
+
             <StatCard
               title="Familias registradas"
               loading={loading}
@@ -267,11 +367,15 @@ const Dashboard = () => {
             />
           </Box>
 
-          {/* Gráfica Donut (Top 3) */}
+          {/* GRÁFICA DONUT */}
           <Box sx={{ width: "100%" }}>
             <Typography
               variant="h6"
-              sx={{ fontWeight: 700, mb: 2, color: "#171717" }}
+              sx={{
+                fontWeight: 700,
+                mb: 2,
+                color: "#171717",
+              }}
             >
               Productos más solicitados
             </Typography>
@@ -301,30 +405,49 @@ const Dashboard = () => {
                   slotProps={{
                     legend: {
                       direction: "column",
-                      position: { vertical: "top", horizontal: "right" },
+                      position: {
+                        vertical: "top",
+                        horizontal: "right",
+                      },
                     },
                   }}
                 />
               ) : (
-                <Typography color="text.secondary">
-                  Sin registros de solicitudes o entregas.
-                </Typography>
+                <EmptyState
+                  icon={DonutLargeIcon}
+                  title="Sin datos disponibles"
+                  description="Sin registros de solicitudes o entregas."
+                />
               )}
             </Box>
           </Box>
 
-          {/* Gráfica de Líneas */}
+          {/* GRÁFICA DE LÍNEAS */}
           <Box sx={{ width: "100%" }}>
             <Typography
               variant="h6"
-              sx={{ fontWeight: 700, mb: 2, color: "#171717" }}
+              sx={{
+                fontWeight: 700,
+                mb: 2,
+                color: "#171717",
+              }}
             >
               Entradas y salidas de productos
             </Typography>
 
-            <Box sx={{ height: 300, width: "100%" }}>
+            <Box
+              sx={{
+                height: 300,
+                width: "100%",
+              }}
+            >
               <LineChart
-                xAxis={[{ data: chartLineData.days, scaleType: "band" }]}
+                xAxis={[
+                  {
+                    data: chartLineData.days,
+                    scaleType: "band",
+                  },
+                ]}
                 series={[
                   {
                     data: chartLineData.entradas,
@@ -350,66 +473,130 @@ const Dashboard = () => {
           sx={{
             display: "flex",
             flexDirection: "column",
-            gap: 2,
+            gap: "16px",
+            minWidth: 0,
+            minHeight: 0,
             height: "100%",
+            maxHeight: "100%",
+            overflow: "hidden",
           }}
         >
-          {/* Panel 1: Solicitudes por responder */}
+          {/* PANEL DE SOLICITUDES */}
           <InfoPanel
-            title={`Solicitudes por responder (${loading ? "..." : solicitudesPendientes.length})`}
+            title={`Solicitudes por responder (${
+              loading ? "..." : solicitudesAgrupadas.length
+            })`}
             loading={loading}
+            scrollable
           >
-            {solicitudesPendientes.length === 0 ? (
+            {solicitudesAgrupadas.length === 0 ? (
               <EmptyState
                 icon={CheckCircleIcon}
                 title="Todo al día"
                 description="No tienes solicitudes pendientes por responder."
               />
             ) : (
-              solicitudesPendientes.map((s) => (
-                <Box
-                  key={s.transferencia_id || s.id}
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    py: 1.2,
-                    borderBottom: "1px solid #f3f4f6",
-                  }}
-                >
-                  <Box>
-                    <Typography fontWeight={600}>
-                      {s.producto_nombre}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {s.cantidad} {s.producto?.unit || s.unit || "pz"}
-                    </Typography>
-                  </Box>
+              solicitudesAgrupadas.map((grupo) => {
+                const esAgrupada = grupo.items.length > 1;
 
-                  {/* Muestra quién te solicita el producto */}
+                const primerProducto = grupo.items[0];
+
+                const resumenProductos = grupo.items
+                  .slice(0, 2)
+                  .map((item) => item.nombre)
+                  .join(", ");
+
+                const productosRestantes = Math.max(grupo.items.length - 2, 0);
+
+                const resumenFinal =
+                  productosRestantes > 0
+                    ? `${resumenProductos}, +${productosRestantes} más`
+                    : resumenProductos;
+
+                return (
                   <Box
+                    key={grupo.id}
                     sx={{
-                      backgroundColor: "#FA7B0A",
-                      color: "#ffffff",
-                      px: 1.5,
-                      py: 0.4,
-                      borderRadius: "12px",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      textTransform: "capitalize",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: 2,
+                      py: 1.2,
+                      borderBottom: "1px solid #f3f4f6",
+                      minWidth: 0,
                     }}
                   >
-                    {s.destino}
+                    {/* INFORMACIÓN DE SOLICITUD */}
+                    <Box
+                      sx={{
+                        minWidth: 0,
+                        flex: 1,
+                      }}
+                    >
+                      <Typography
+                        fontWeight={600}
+                        sx={{
+                          color: "#171717",
+                          overflowWrap: "anywhere",
+                        }}
+                      >
+                        {esAgrupada
+                          ? `${grupo.items.length} productos solicitados`
+                          : primerProducto.nombre}
+                      </Typography>
+
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{
+                          display: "block",
+                          mt: 0.3,
+                          lineHeight: 1.5,
+                          overflowWrap: "anywhere",
+
+                          ...(esAgrupada && {
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }),
+                        }}
+                        title={esAgrupada ? resumenProductos : undefined}
+                      >
+                        {esAgrupada
+                          ? resumenFinal
+                          : `${primerProducto.cantidad} ${primerProducto.unit}`}
+                      </Typography>
+                    </Box>
+
+                    <Box
+                      sx={{
+                        backgroundColor: "#FA7B0A",
+                        color: "#ffffff",
+                        px: 1.5,
+                        py: 0.4,
+                        borderRadius: "12px",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        textTransform: "capitalize",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {grupo.destino}
+                    </Box>
                   </Box>
-                </Box>
-              ))
+                );
+              })
             )}
           </InfoPanel>
 
-          {/* Panel 2: Productos con bajo stock */}
+          {/* PANEL DE PRODUCTOS CON BAJO STOCK */}
           <InfoPanel
-            title={`Productos con bajo stock (${loading ? "..." : stockBajo.length})`}
+            title={`Productos con bajo stock (${
+              loading ? "..." : stockBajo.length
+            })`}
             loading={loading}
+            scrollable
           >
             {stockBajo.length === 0 ? (
               <EmptyState
@@ -425,11 +612,19 @@ const Dashboard = () => {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
+                    gap: 2,
                     py: 1.2,
                     borderBottom: "1px solid #F5F5F4",
                   }}
                 >
-                  <Typography sx={{ color: "#171717", fontWeight: 500 }}>
+                  <Typography
+                    sx={{
+                      color: "#171717",
+                      fontWeight: 500,
+                      minWidth: 0,
+                      overflowWrap: "anywhere",
+                    }}
+                  >
                     {p.nombre}
                   </Typography>
 
@@ -437,6 +632,7 @@ const Dashboard = () => {
                     sx={{
                       fontWeight: 700,
                       color: "#DC2626",
+                      flexShrink: 0,
                     }}
                   >
                     {p.cantidad} {p.unit || "pz"}

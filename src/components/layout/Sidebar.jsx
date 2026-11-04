@@ -48,13 +48,44 @@ const Sidebar = () => {
     const cargarPendientes = async () => {
       try {
         const solicitudes = await getSolicitudesRecibidas();
+
         const pendientes = solicitudes.filter(
           (s) =>
             String(s.aprobacion || "")
               .toLowerCase()
               .trim() === "en_espera",
         );
-        setNotificaciones(pendientes.length);
+
+        const VENTANA_MS = 10000;
+        const grupos = [];
+
+        [...pendientes]
+          .sort(
+            (a, b) =>
+              new Date(b.created_at || b.fecha) -
+              new Date(a.created_at || a.fecha),
+          )
+          .forEach((s) => {
+            const fecha = s.created_at || s.fecha;
+            const tiempo = new Date(fecha).getTime();
+            const sucursalSolicitante = s.origen;
+
+            let grupo = grupos.find(
+              (g) =>
+                g.origen === sucursalSolicitante &&
+                Math.abs(g.tiempo - tiempo) <= VENTANA_MS,
+            );
+
+            if (!grupo) {
+              grupo = {
+                origen: sucursalSolicitante,
+                tiempo,
+              };
+
+              grupos.push(grupo);
+            }
+          });
+        setNotificaciones(grupos.length);
       } catch (error) {
         console.error(error);
       }
