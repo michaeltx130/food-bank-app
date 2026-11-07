@@ -19,6 +19,7 @@ import {
   aprobarSolicitud,
   rechazarSolicitud,
 } from "../../services/api";
+import { groupRequests } from "../../utils/groupRequests";
 
 const textFieldStyle = {
   "& .MuiOutlinedInput-root": {
@@ -67,51 +68,10 @@ const Received = () => {
     };
   }, [refreshKey]);
 
-  const solicitudesAgrupadas = useMemo(() => {
-    const VENTANA_MS = 10000;
-    const grupos = [];
-
-    [...solicitudes]
-      .sort(
-        (a, b) =>
-          new Date(b.created_at || b.fecha) - new Date(a.created_at || a.fecha),
-      )
-      .forEach((s) => {
-        const fecha = s.created_at || s.fecha;
-        const tiempo = new Date(fecha).getTime();
-        const sucursalSolicitante = s.origen;
-
-        let grupo = grupos.find(
-          (g) =>
-            g.origen === sucursalSolicitante &&
-            Math.abs(g.tiempo - tiempo) <= VENTANA_MS,
-        );
-
-        if (!grupo) {
-          grupo = {
-            id: `${sucursalSolicitante}_${fecha}`,
-            destino: s.destino,
-            origen: s.origen,
-            created_at: fecha,
-            tiempo,
-            aprobacion: s.aprobacion || s.estado,
-            error: s.error,
-            items: [],
-            rawIds: [],
-          };
-          grupos.push(grupo);
-        }
-
-        grupo.rawIds.push(s.transferencia_id || s.id);
-        grupo.items.push({
-          nombre: s.producto_nombre,
-          cantidad: s.cantidad,
-          unit: s.producto?.unit || s.unit || "pz",
-        });
-      });
-
-    return grupos;
-  }, [solicitudes]);
+ const solicitudesAgrupadas = useMemo(
+  () => groupRequests(solicitudes),
+  [solicitudes],
+);
 
   const handleAprobar = async (pedido) => {
     try {

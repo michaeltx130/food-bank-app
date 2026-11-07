@@ -25,6 +25,7 @@ import {
   getBranchProducts,
   createSolicitud,
 } from "../../services/api";
+import { groupRequests } from "../../utils/groupRequests";
 
 const SUCURSALES = [
   { key: "comondu", label: "Comondú" },
@@ -112,46 +113,10 @@ const Sent = ({ open, setOpen }) => {
     };
   }, [refreshKey]);
 
-  const solicitudesAgrupadas = useMemo(() => {
-    const VENTANA_MS = 10000;
-    const grupos = [];
-
-    [...solicitudes]
-      .sort(
-        (a, b) =>
-          new Date(b.created_at || b.fecha) - new Date(a.created_at || a.fecha),
-      )
-      .forEach((s) => {
-        const fecha = s.created_at || s.fecha;
-        const tiempo = new Date(fecha).getTime();
-
-        let grupo = grupos.find(
-          (g) =>
-            g.origen === s.origen && Math.abs(g.tiempo - tiempo) <= VENTANA_MS,
-        );
-
-        if (!grupo) {
-          grupo = {
-            id: `${s.origen}_${fecha}`,
-            origen: s.origen,
-            created_at: fecha,
-            tiempo,
-            aprobacion: s.aprobacion || s.estado,
-            error: s.error,
-            items: [],
-          };
-          grupos.push(grupo);
-        }
-
-        grupo.items.push({
-          nombre: s.producto_nombre,
-          cantidad: s.cantidad,
-          unit: s.producto?.unit || s.unit || "pz",
-        });
-      });
-
-    return grupos;
-  }, [solicitudes]);
+ const solicitudesAgrupadas = useMemo(
+  () => groupRequests(solicitudes),
+  [solicitudes],
+);
 
   useEffect(() => {
     if (productos.length > prevCount.current) {
